@@ -20,7 +20,7 @@ static void uivector_cleanup(void* p)
 {
   ((uivector*)p)->size = ((uivector*)p)->allocsize = 0;
   free(((uivector*)p)->data);
-  ((uivector*)p)->data = __null;
+  ((uivector*)p)->data = nullptr;
 }
 
 static unsigned uivector_reserve(uivector* p, size_t allocsize)
@@ -56,7 +56,7 @@ static unsigned uivector_resizev(uivector* p, size_t size, unsigned value)
 
 static void uivector_init(uivector* p)
 {
-  p->data = __null;
+  p->data = nullptr;
   p->size = p->allocsize = 0;
 }
 
@@ -405,8 +405,8 @@ unsigned huffman_code_lengths(unsigned* lengths, const unsigned* frequencies,
   size_t numpresent = 0;
   BPMNode* leaves;
 
-  if(numcodes == 0) return 80;
-  if((1u << maxbitlen) < numcodes) return 80;
+  if (numcodes == 0) return 80;
+  if ((static_cast<size_t>(1u) << maxbitlen) < numcodes) return 80;
 
   leaves = (BPMNode*)malloc(numcodes * sizeof(*leaves));
   if(!leaves) return 83;
@@ -967,7 +967,7 @@ static unsigned countZeros(const unsigned char* data, size_t size, size_t pos)
   return (unsigned)(data - start);
 }
 
-static void updateHashChain(Hash* hash, size_t wpos, unsigned hashval, unsigned short numzeros)
+static void updateHashChain(Hash* hash, unsigned wpos, unsigned hashval, unsigned short numzeros)
 {
   hash->val[wpos] = (int)hashval;
   if(hash->head[hashval] != -1) hash->chain[wpos] = hash->head[hashval];
@@ -1008,7 +1008,7 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
 
   for(pos = inpos; pos < insize; ++pos)
   {
-    size_t wpos = pos & (windowsize - 1);
+    unsigned wpos = pos & (windowsize - 1);
     unsigned chainlength = 0;
 
     hashval = getHash(in, insize, pos);

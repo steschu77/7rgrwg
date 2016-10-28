@@ -11,11 +11,16 @@
 #undef min
 #undef max
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1310) /*Visual Studio: A few warning types are not desired here.*/
+#pragma warning( disable : 4244 ) /*implicit conversions: not warned by gcc -Wall -Wextra and requires too much casts*/
+#pragma warning( disable : 4996 ) /*VS does not like fopen, but fopen_s is not standard C so unusable here*/
+#endif /*_MSC_VER */
+
 // ============================================================================
 void createPath(const char *Path)
 {
   char SubDir[260];
-  strcpy(SubDir, Path);
+  strncpy(SubDir, Path, 260);
 
   char *Work = SubDir;
 
