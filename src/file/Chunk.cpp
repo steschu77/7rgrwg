@@ -1,10 +1,13 @@
-#include "chunk.h"
-#include "zipfile.h"
-#include "deflate.h"
+#include "Chunk.h"
+#include "ZipFile.h"
+#include "Deflate.h"
 
 // ============================================================================
-void loadChunk(const void* buffer, int x, int z, chunk_t** ppChunk)
+void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t** ppChunk)
 {
+  int cx = 32 * rx + x;
+  int cz = 32 * rz + z;
+
   int idx = x + 32 * z;
 
   const uint32_t ofs = reinterpret_cast<const uint32_t*>(buffer)[idx];
@@ -19,24 +22,41 @@ void loadChunk(const void* buffer, int x, int z, chunk_t** ppChunk)
   //const uint32_t size = * (reinterpret_cast<const uint32_t*>(ptr));
   ptr += sizeof(uint32_t);
 
+  // 00 74 74 63 00 xx xx xx xx, x = version (Alpha 15: 0x21, Alpha 16: 0x22)
   ptr += 9;
 
-  const ZipLocalFileHeader* pFileHead = reinterpret_cast<const ZipLocalFileHeader*>(ptr);
+  const ZipLocalFileHeader* pLocalHead = reinterpret_cast<const ZipLocalFileHeader*>(ptr);
   ptr += sizeof(ZipLocalFileHeader);
 
   char ChunkName[260] = { 0 };
-  memcpy(ChunkName, ptr, pFileHead->fileNameLength);
+  memcpy(ChunkName, ptr, pLocalHead->fileNameLength);
 
+  // filename: "xx/yy"
+  ptr += pLocalHead->fileNameLength;
+  ptr += pLocalHead->extraFieldLength;
+
+  const unsigned char* in = reinterpret_cast<const unsigned char*>(ptr);
+  unsigned char* out = new unsigned char [pLocalHead->sizeUncompressed];
+  ptr += pLocalHead->sizeCompressed;
+
+  size_t insize = pLocalHead->sizeCompressed;
+  size_t outsize = pLocalHead->sizeUncompressed;
+
+  file::inflate(&out, &outsize, in, insize);
+
+  int cx2 = reinterpret_cast<const int*>(out)[0];
+  int cz2 = reinterpret_cast<const int*>(out)[2];
+
+  if (cx != cx2 || cz != cz2) throw;
+
+  const ZipFileHeader* pFileHead = reinterpret_cast<const ZipFileHeader*>(ptr);
+  ptr += sizeof(ZipFileHeader);
   ptr += pFileHead->fileNameLength;
   ptr += pFileHead->extraFieldLength;
 
-  const unsigned char* in = reinterpret_cast<const unsigned char*>(ptr);
-  unsigned char* out = new unsigned char [pFileHead->sizeUncompressed];
-
-  size_t insize = pFileHead->sizeCompressed;
-  size_t outsize = pFileHead->sizeUncompressed;
-
-  inflate(&out, &outsize, in, insize);
+  const ZipCentralDirEnd* pDirEnd = reinterpret_cast<const ZipCentralDirEnd*>(ptr);
+  ptr += sizeof(ZipCentralDirEnd);
+  ptr += pDirEnd->zipFileCommentLength;
 
   chunk_t* pChunk = new chunk_t;
   pChunk->pRaw = in;
@@ -48,7 +68,7 @@ void loadChunk(const void* buffer, int x, int z, chunk_t** ppChunk)
 }
 
 // ============================================================================
-void decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize)
+void file::decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize)
 {
   const unsigned char* p0 = out;
   out += 0x14;
@@ -157,7 +177,7 @@ void decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize)
     }
   }
 
-  // block health: 250 - x[i]
+  // block damage
   for (int i = 0; i < sections; i++)
   {
     printf("j: %4d %06x  %02x\n", i, (int)(out-p0), out[0]);

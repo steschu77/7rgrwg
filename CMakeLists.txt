@@ -41,11 +41,11 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 add_executable(rwg
-  deflate.cpp
-  deflate.h
-  file.cpp
-  file.h
-  chunk.cpp
-  chunk.h
-  main.cpp
+  src/file/Deflate.cpp
+  src/file/Deflate.h
+  src/file/FileSystem.cpp
+  src/file/FileSystem.h
+  src/file/Chunk.cpp
+  src/file/Chunk.h
+  src/main.cpp
 )

@@ -15,5 +15,9 @@ struct chunk_t
   size_t cZipped;
 };
 
-void loadChunk(const void* p7rg, int x, int z, chunk_t** ppChunk);
+namespace file {
+
+void loadChunk(const void* p7rg, int x, int z, int rx, int rz, chunk_t** ppChunk);
 void decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize);
+
+}

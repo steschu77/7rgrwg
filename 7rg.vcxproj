@@ -40,6 +40,9 @@
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <Optimization Condition="'$(Configuration)'=='Debug'">Disabled</Optimization>
+      <Optimization Condition="'$(Configuration)'=='Release'">MinSpace</Optimization>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -48,7 +51,6 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
@@ -58,16 +60,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="chunk.h" />
-    <ClInclude Include="deflate.h" />
-    <ClInclude Include="file.h" />
-    <ClInclude Include="zipfile.h" />
+    <ClInclude Include="src\file\Chunk.h" />
+    <ClInclude Include="src\file\Deflate.h" />
+    <ClInclude Include="src\file\FileSystem.h" />
+    <ClInclude Include="src\file\ZipFile.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="chunk.cpp" />
-    <ClCompile Include="deflate.cpp" />
-    <ClCompile Include="file.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\file\Chunk.cpp" />
+    <ClCompile Include="src\file\Deflate.cpp" />
+    <ClCompile Include="src\file\FileSystem.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
