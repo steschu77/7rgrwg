@@ -15,7 +15,7 @@ void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx,
 
   size_t c7rg = 0;
   uint8_t* p7rg = nullptr;
-  loadFile(&p7rg, &c7rg, s.str().c_str());
+  loadFile(&p7rg, &c7rg, strFile.c_str());
 
   for (int z = 0; z < 32; z++) {
     for (int x = 0; x < 32; x++) {
@@ -31,4 +31,9 @@ void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx,
 // ============================================================================
 void file::saveRegion(void** pp7rg, size_t* pc7rg, const region_t* pRegion)
 {
+  for (int z = 0; z < 32; z++) {
+    for (int x = 0; x < 32; x++) {
+      //file::saveChunk(p7rg+4, x, z, rx, rz, &pRegion->chunk[z][x]);
+    }
+  }
 }

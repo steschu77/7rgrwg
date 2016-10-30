@@ -36,7 +36,7 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
   char ChunkName[260] = { 0 };
   memcpy(ChunkName, ptr, pLocalHead->fileNameLength);
 
-  // filename: "xx/yy"
+  // filename: "xx/zz"
   ptr += pLocalHead->fileNameLength;
   ptr += pLocalHead->extraFieldLength;
 
@@ -63,13 +63,41 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
   ptr += sizeof(ZipCentralDirEnd);
   ptr += pDirEnd->zipFileCommentLength;
 
-  chunk_t* pChunk = new chunk_t(cx, cz);
+  chunk_t* pChunk = new chunk_t(x, z);
   pChunk->pRaw = in;
   pChunk->cRaw = insize;
   pChunk->pZipped = out;
   pChunk->cZipped = outsize;
 
   *ppChunk = pChunk;
+}
+
+// ============================================================================
+void file::saveChunk(const chunk_t* pChunk, int rx, int rz, uint8_t const ** ppBuffer, size_t* pcBuffer)
+{
+  if (pChunk == nullptr) {
+    return;
+  }
+
+  int x = pChunk->x;
+  int z = pChunk->z;
+
+  int tx = (rx < 0) ? ((x + 1) & 31) : (x);
+  int tz = (rz < 0) ? ((z + 1) & 31) : (z);
+
+  int cx = 32 * rx + tx;
+  int cz = 32 * rz + tz;
+
+  int idx = x + 32 * z;
+
+  char fileName[32] = { 0 };
+  int fileNameLength = sprintf(fileName, "%d/%d", cx, cz);
+
+  const uint8_t* pRaw = pChunk->pRaw;
+  size_t cRaw = (pChunk->cRaw + 0xfffu) / 0x1000u;
+
+  *ppBuffer = pRaw;
+  *pcBuffer = cRaw;
 }
 
 // ============================================================================
@@ -195,11 +223,4 @@ void file::decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize
       out += 1;
     }
   }
-
-  char fName[260];
-  sprintf(fName, "g:\\tmp\\test8\\-72x65_1");
-
-  FILE* f = fopen(fName, "wb");
-  fwrite(out, 1, outsize - (out-p0), f);
-  fclose(f);
 }
