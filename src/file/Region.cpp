@@ -11,7 +11,7 @@ void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx,
 
   std::string strFile = s.str();
 
-  region_t* pRegion = new region_t();
+  region_t* pRegion = new region_t(rx, rz);
 
   size_t c7rg = 0;
   uint8_t* p7rg = nullptr;

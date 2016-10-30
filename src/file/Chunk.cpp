@@ -63,7 +63,7 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
   ptr += sizeof(ZipCentralDirEnd);
   ptr += pDirEnd->zipFileCommentLength;
 
-  chunk_t* pChunk = new chunk_t;
+  chunk_t* pChunk = new chunk_t(cx, cz);
   pChunk->pRaw = in;
   pChunk->cRaw = insize;
   pChunk->pZipped = out;

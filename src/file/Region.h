@@ -4,6 +4,8 @@
 
 struct region_t
 {
+  region_t(int x=0, int z=0) : x(x), z(z) {}
+
   int x, z;
 
   chunk_t *chunk[32][32];
