@@ -5,7 +5,7 @@
 namespace file {
 
 void createPath(const char *Path);
-void loadFile(void** out, size_t* outsize, const char* filename);
+void loadFile(uint8_t** out, size_t* outsize, const char* filename);
 void saveFile(const void* buffer, size_t buffersize, const char* filename);
 
 }

@@ -45,35 +45,34 @@ void file::createPath(const char *Path)
 }
 
 // ============================================================================
-void file::loadFile(void** out, size_t* outsize, const char* filename)
+void file::loadFile(uint8_t** out, size_t* outsize, const char* filename)
 {
-  FILE* file = fopen(filename, "rb");
-  if (file == nullptr) throw;
+  FILE* f = fopen(filename, "rb");
+  if (f == nullptr) throw;
 
-  fseek(file, 0, SEEK_END);
+  fseek(f, 0, SEEK_END);
+  size_t cBuffer = ftell(f);
+  if (cBuffer == LONG_MAX) throw; // >= 4 GiB
 
-  size_t size = ftell(file);
-  if (size == LONG_MAX) throw; // >= 4 GiB
+  uint8_t* buffer = new uint8_t[cBuffer];
 
-  *out = malloc(size);
-  if (*out == nullptr && size > 0) throw;
+  fseek(f, 0, SEEK_SET);
+  const size_t cFile = fread(buffer, 1, cBuffer, f);
 
-  fread(out, 1, size, file);
+  fclose(f);
 
-  fclose(file);
-
-  *outsize = size;
+  *out = buffer;
+  *outsize = cBuffer;
 }
 
 // ============================================================================
 void file::saveFile(const void* buffer, size_t buffersize, const char* filename)
 {
-  FILE* file;
-  file = fopen(filename, "wb" );
-  if (file == 0) {
+  FILE* f = fopen(filename, "wb" );
+  if (f == 0) {
     throw;
   }
 
-  fwrite((char*)buffer, 1, buffersize, file);
-  fclose(file);
+  fwrite(buffer, 1, buffersize, f);
+  fclose(f);
 }
