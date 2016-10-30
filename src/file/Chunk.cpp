@@ -7,8 +7,11 @@
 // ============================================================================
 void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t** ppChunk)
 {
-  int cx = 32 * rx + x;
-  int cz = 32 * rz + z;
+  int tx = (rx < 0) ? ((x + 1) & 31) : (x);
+  int tz = (rz < 0) ? ((z + 1) & 31) : (z);
+
+  int cx = 32 * rx + tx;
+  int cz = 32 * rz + tz;
 
   int idx = x + 32 * z;
 
