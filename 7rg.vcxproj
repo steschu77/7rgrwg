@@ -65,6 +65,7 @@
     <ClInclude Include="src\file\FileSystem.h" />
     <ClInclude Include="src\file\Region.h" />
     <ClInclude Include="src\file\ZipFile.h" />
+    <ClInclude Include="src\main.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\file\Chunk.cpp" />
