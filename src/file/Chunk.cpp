@@ -1,3 +1,5 @@
+#include "../main.h"
+
 #include "Chunk.h"
 #include "ZipFile.h"
 #include "Deflate.h"
