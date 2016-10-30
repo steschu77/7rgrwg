@@ -1,10 +1,5 @@
 #pragma once
 
-#define _CRT_SECURE_NO_WARNINGS
-#include <cstdio>
-#include <cstring> /*for size_t*/
-#include <algorithm>
-
 struct chunk_t
 {
   int x, z;
