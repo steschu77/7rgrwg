@@ -15,19 +15,25 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
 
   int idx = x + 32 * z;
 
-  const uint32_t ofs = reinterpret_cast<const uint32_t*>(buffer)[idx];
-
-  if (ofs == 0) {
+  const uint32_t tmpOfsSize = reinterpret_cast<const uint32_t*>(buffer)[idx];
+  if (tmpOfsSize == 0) {
     return;
   }
 
+  const uint32_t ofs = 0x1000 * (tmpOfsSize & 0xffffff);
+  const uint32_t size = 0x1000 * (tmpOfsSize >> 24);
+
+  uint8_t* ptrChunk = new uint8_t[size];
   const uint8_t* ptr = reinterpret_cast<const uint8_t*>(buffer);
-  ptr += 0x1000 * (ofs & 0xffffff);
-  
+
+  memcpy(ptrChunk, ptr + ofs, size);
+
+  ptr = ptrChunk;
+
   //const uint32_t size = * (reinterpret_cast<const uint32_t*>(ptr));
   ptr += sizeof(uint32_t);
 
-  // 00 74 74 63 00 xx xx xx xx, x = version (Alpha 15: 0x21, Alpha 16: 0x22)
+  // 00 74 74 63 00 xx xx xx xx, x = version (Alpha 14: 0x21, Alpha 15: 0x22)
   ptr += 9;
 
   const ZipLocalFileHeader* pLocalHead = reinterpret_cast<const ZipLocalFileHeader*>(ptr);
@@ -40,12 +46,13 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
   ptr += pLocalHead->fileNameLength;
   ptr += pLocalHead->extraFieldLength;
 
-  const unsigned char* in = reinterpret_cast<const unsigned char*>(ptr);
-  unsigned char* out = new unsigned char [pLocalHead->sizeUncompressed];
-  ptr += pLocalHead->sizeCompressed;
-
   size_t insize = pLocalHead->sizeCompressed;
   size_t outsize = pLocalHead->sizeUncompressed;
+
+  const unsigned char* in = ptr;
+  unsigned char* out = new unsigned char [outsize];
+
+  ptr += pLocalHead->sizeCompressed;
 
   file::inflate(&out, &outsize, in, insize);
 
@@ -64,8 +71,8 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
   ptr += pDirEnd->zipFileCommentLength;
 
   chunk_t* pChunk = new chunk_t(x, z);
-  pChunk->pRaw = in;
-  pChunk->cRaw = insize;
+  pChunk->pRaw = ptrChunk;
+  pChunk->cRaw = size;
   pChunk->pZipped = out;
   pChunk->cZipped = outsize;
 
@@ -94,7 +101,7 @@ void file::saveChunk(const chunk_t* pChunk, int rx, int rz, uint8_t const ** ppB
   int fileNameLength = sprintf(fileName, "%d/%d", cx, cz);
 
   const uint8_t* pRaw = pChunk->pRaw;
-  size_t cRaw = (pChunk->cRaw + 0xfffu) / 0x1000u;
+  size_t cRaw = pChunk->cRaw;
 
   *ppBuffer = pRaw;
   *pcBuffer = cRaw;
@@ -148,7 +155,7 @@ void file::decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize
   // Height Map
   out += 16 * 16;
 
-  // Another Map
+  // Another Height Map
   out += 16 * 16;
 
   // All 03's Map (biome?, 03 = pine forest)

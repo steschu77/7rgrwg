@@ -4,7 +4,13 @@
 
 struct region_t
 {
-  region_t(int x=0, int z=0) : x(x), z(z) {}
+  region_t(int x=0, int z=0) : x(x), z(z) { 
+    for (int z = 0; z < 32; z++) {
+      for (int x = 0; x < 32; x++) {
+        chunk[z][x] = nullptr;
+      }
+    }
+  }
 
   int x, z;
 
@@ -14,6 +20,6 @@ struct region_t
 namespace file {
 
 void loadRegion(region_t** ppRegion, const std::string& strFolder, int rx, int rz);
-void saveRegion(void** pp7rg, size_t* pc7rg, const region_t* pRegion);
+void saveRegion(const region_t* pRegion, const std::string& strFolder);
 
 }
