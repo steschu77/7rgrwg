@@ -22,7 +22,7 @@ unsigned inflate(unsigned char** out, size_t* outsize,
                          const unsigned char* in, size_t insize);
 
 unsigned deflate(unsigned char** out, size_t* outsize,
-                         const unsigned char* in, size_t insize,
-                         const LodePNGCompressSettings* settings);
+                         const unsigned char* in, size_t insize);
 
+uint32_t crc32(const unsigned char *buf, size_t len);
 }

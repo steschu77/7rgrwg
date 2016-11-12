@@ -88,6 +88,8 @@ void file::saveRegion(const region_t* pRegion, const std::string& strFolder)
     for (int x = 0; x < 32; x++) {
       uint32_t size = _saveChunk(pRegion, x, z, f);
       if (size != 0) {
+        // seems that 9 additional '00's are needed, which in turn needs to be
+        // rounded up to 0x1000 '00's.
         uint8_t block[0x1000] = { 0 };
         fwrite(block, sizeof(uint8_t), 0x1000, f);
       }
