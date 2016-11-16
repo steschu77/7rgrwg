@@ -19,9 +19,18 @@ void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx,
 
   for (int z = 0; z < 32; z++) {
     for (int x = 0; x < 32; x++) {
-      file::loadChunk(p7rg+4, x, z, rx, rz, &pRegion->chunk[z][x]);
+      //file::loadChunk(p7rg+4, x, z, rx, rz, &pRegion->chunk[z][x]);
+      file::encodeChunk(&pRegion->chunk[z][x], x, z, rx, rz);
     }
   }
+
+/*  for (int z = 0; z < 32; z++) {
+    for (int x = 0; x < 32; x++) {
+      if (pRegion->chunk[z][x] != nullptr) {
+        file::decodeChunk(pRegion->chunk[z][x]);
+      }
+    }
+  }*/
 
   delete[] p7rg;
 
@@ -36,7 +45,7 @@ static uint32_t _saveChunk(const region_t* pRegion, int x, int z, FILE* f)
 
   const uint8_t* pBuffer = nullptr;
   size_t cBuffer = 0;
-  file::saveChunk(pRegion->chunk[z][x], rx, rz, &pBuffer, &cBuffer);
+  file::saveChunk(pRegion->chunk[z][x], x, z, rx, rz, &pBuffer, &cBuffer);
 
   if (f != nullptr) {
     fwrite(pBuffer, 1u, cBuffer, f);

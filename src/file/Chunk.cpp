@@ -233,9 +233,14 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
 }
 
 // ============================================================================
-void file::decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize)
+void file::decodeChunk(chunk_t* pChunk)
 {
+  const unsigned char* out = pChunk->pZipped;
+  size_t outsize = pChunk->cZipped;
+
   const unsigned char* p0 = out;
+
+  // xx xx xx xx yy yy yy yy zz zz zz zz 18 ab 01 00 00 00 00 00
   out += 0x14;
 
   const int sections = 64;
@@ -247,7 +252,7 @@ void file::decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize
       printf("\n");
       continue;
     }
-    printf(" %02x", out[0]);
+    printf(" %02x", out[1]);
     if (out[1] == 0) {
       out += 2;
       out += 1;
@@ -280,7 +285,7 @@ void file::decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize
   // Height Map
   out += 16 * 16;
 
-  // Another Height Map
+  // Another Height Map (without ground decorations?)
   out += 16 * 16;
 
   // All 03's Map (biome?, 03 = pine forest)
@@ -290,8 +295,10 @@ void file::decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize
   // 00 00 00 00 0F 00 Map
   out += 16 * 16 * 6;
 
-  // +/- something Map
+  // 00 ff 00 00
   out += 4;
+
+  // +/- something Map
   out += 16 * 16;
 
   // 7d/7E Map 
@@ -355,4 +362,215 @@ void file::decodeChunk(chunk_t* pChunk, const unsigned char* out, size_t outsize
       out += 1;
     }
   }
+
+  // const unsigned char* p1 = out;
+  // const unsigned char* p2 = p0 + outsize;
+  // p1 .. p2: 01 00 00 00 00 00 00 00 00 00 00 01 00
+}
+
+// ============================================================================
+void _encodeAirBlockSection(uint8_t** ptr)
+{
+  (*ptr)[0] = 0;
+  ++(*ptr);
+}
+
+// ============================================================================
+void _encodeBlockSection(uint8_t** ptr, uint32_t x)
+{
+  (*ptr)[0] = 1;
+  (*ptr)[1] = 0;
+  (*ptr)[2] = static_cast<uint8_t>(x & 0xff);
+  (*ptr) += 3;
+}
+
+// ============================================================================
+void _encodeBlockSection(uint8_t** ptr, const uint32_t* p)
+{
+  (*ptr)[0] = 1;
+  (*ptr)[1] = 1;
+  (*ptr) += 2;
+
+  for (int i = 0; i < 16 * 16 * 4; i++) {
+    (*ptr)[i] = static_cast<uint8_t>(p[i] & 0xff);
+  }
+
+  (*ptr) += 16 * 16 * 4;
+}
+
+// ============================================================================
+void _encodeNoExtendedBlocks(uint8_t** ptr)
+{
+  (*ptr)[0] = 0;
+  ++(*ptr);
+}
+
+// ============================================================================
+void _encodeExtendedBlockIds(uint8_t** ptr, const uint32_t* p)
+{
+  (*ptr)[0] = 1;
+  ++(*ptr);
+
+  for (int i = 0; i < 16 * 16 * 4 * 3; i+=3) {
+    (*ptr)[i  ] = static_cast<uint8_t>((p[i] >>  8) & 0xff);
+    (*ptr)[i+1] = static_cast<uint8_t>((p[i] >> 16) & 0xff);
+    (*ptr)[i+2] = static_cast<uint8_t>((p[i] >> 24) & 0xff);
+  }
+
+  (*ptr) += 16 * 16 * 4 * 3;
+}
+
+// ============================================================================
+void _encodeRLESectionFill(uint8_t** ptr, uint8_t x)
+{
+  (*ptr)[0] = 1;
+  (*ptr)[1] = x;
+  (*ptr) += 2;
+}
+
+// ============================================================================
+void _encodeRLESectionCopy(uint8_t** ptr, const uint8_t* x)
+{
+  (*ptr)[0] = 0;
+  ++(*ptr);
+
+  memcpy(*ptr, x, 16 * 16 * 4);
+  (*ptr) += 16 * 16 * 4;
+}
+
+// ============================================================================
+void file::encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz)
+{
+  chunk_t* pChunk = new chunk_t(x, z);
+  pChunk->c7rg = 16 * 16 * 256 * 8;
+  pChunk->p7rg = new uint8_t[pChunk->c7rg];
+  memset(pChunk->p7rg, 0, pChunk->c7rg);
+
+  const size_t cZipped = 16 * 16 * 256 * 8;
+  uint8_t* pZipped = new uint8_t[cZipped];
+  memset(pZipped, 0, cZipped);
+
+  pChunk->pZipped = pZipped;
+
+  uint8_t* p0 = pZipped;
+  uint8_t* ptr = pZipped;
+
+  // xx xx xx xx yy yy yy yy zz zz zz zz 18 ab 01 00 00 00 00 00
+  int* pCoords = reinterpret_cast<int*>(ptr);
+  int tx = (rx < 0) ? ((x + 1) & 31) : (x);
+  int tz = (rz < 0) ? ((z + 1) & 31) : (z);
+
+  int cx = 32 * rx + tx;
+  int cz = 32 * rz + tz;
+
+  pCoords[0] = cx;
+  pCoords[1] = 0;
+  pCoords[2] = cz;
+  pCoords[3] = 0;
+  pCoords[4] = 0;
+  ptr += 0x14;
+
+  const int sections = 64;
+  _encodeBlockSection(&ptr, 12);
+  _encodeNoExtendedBlocks(&ptr);
+
+  _encodeBlockSection(&ptr, x+16*z);
+  _encodeNoExtendedBlocks(&ptr);
+
+  for (int i = 2; i < sections; i++) {
+    _encodeAirBlockSection(&ptr); // 00
+  }
+
+  // 0f: solid, 00 air
+  _encodeRLESectionFill(&ptr, 0x0f);
+  _encodeRLESectionFill(&ptr, 0x0f);
+  for (int i = 2; i < sections; i++)
+  {
+    _encodeRLESectionFill(&ptr, 0x00);
+  }
+
+  // Height Map
+  memset(ptr, 8, 16*16);
+  ptr += 16 * 16;
+
+  // Another Height Map (without ground decorations?)
+  memset(ptr, 8, 16*16);
+  ptr += 16 * 16;
+
+  // All 03's Map (biome?, 03 = pine forest)
+  memset(ptr, 3, 16*16);
+  ptr += 16 * 16;
+
+  // 03 00 00 00 0F 00 Map
+  // 00 00 00 00 0F 00 Map
+  for (int i = 0; i < 16*16*6; i+=6) {
+    ptr[i  ] = 0x00;
+    ptr[i+1] = 0x00;
+    ptr[i+2] = 0x00;
+    ptr[i+3] = 0x00;
+    ptr[i+4] = 0x0f;
+    ptr[i+5] = 0x00;
+  }
+  ptr += 16 * 16 * 6;
+
+  // ??
+  ptr[0] = 0x00;
+  ptr[1] = 0xff;
+  ptr[2] = 0x00;
+  ptr[3] = 0x00;
+  ptr += 4;
+
+  // +/- something Map
+  memset(ptr, 0, 16*16);
+  ptr += 16 * 16;
+
+  // 7d/7E Map 
+  memset(ptr, 0x7d, 16*16);
+  ptr += 16 * 16;
+
+  // +/- something Map
+  memset(ptr, 0, 16*16);
+  ptr += 16 * 16;
+
+  // fill level? -128 .. 127 (solid .. air)
+  _encodeRLESectionFill(&ptr, 0x80);
+  _encodeRLESectionFill(&ptr, 0x80);
+  for (int i = 2; i < sections; i++)
+  {
+    _encodeRLESectionFill(&ptr, 0x7f);
+  }
+
+  // 00: solid, 0f: air, 0a: ??
+  _encodeRLESectionFill(&ptr, 0x00);
+  _encodeRLESectionFill(&ptr, 0x00);
+  for (int i = 2; i < sections; i++)
+  {
+    _encodeRLESectionFill(&ptr, 0x0f);
+  }
+
+  // all 0
+  for (int i = 0; i < sections; i++)
+  {
+    _encodeRLESectionFill(&ptr, 0x00);
+  }
+
+  // block damage
+  for (int i = 0; i < sections; i++)
+  {
+    _encodeRLESectionFill(&ptr, 0x00);
+  }
+
+  // const unsigned char* p1 = out;
+  // const unsigned char* p2 = p0 + outsize;
+  // p1 .. p2: 01 00 00 00 00 00 00 00 00 00 00 01 00
+  const uint8_t Footer[] = {
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0
+  };
+
+  memcpy(ptr, Footer, sizeof(Footer));
+  ptr += sizeof(Footer);
+
+  pChunk->cZipped = ptr - p0;
+
+  *ppChunk = pChunk;
 }
