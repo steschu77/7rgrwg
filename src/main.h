@@ -10,7 +10,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <climits>
+#include <cmath>
 
 #include <algorithm>
 #include <string>
 #include <sstream>
+#include <vector>
+#include <map>
+#include <set>

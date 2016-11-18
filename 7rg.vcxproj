@@ -43,6 +43,8 @@
       <Optimization Condition="'$(Configuration)'=='Debug'">Disabled</Optimization>
       <Optimization Condition="'$(Configuration)'=='Release'">MinSpace</Optimization>
       <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -53,6 +55,8 @@
     <ClCompile>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -60,19 +64,57 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\7dtd\BlockIds.h" />
     <ClInclude Include="src\file\Chunk.h" />
     <ClInclude Include="src\file\Deflate.h" />
     <ClInclude Include="src\file\FileSystem.h" />
     <ClInclude Include="src\file\Region.h" />
     <ClInclude Include="src\file\ZipFile.h" />
+    <ClInclude Include="src\filter\Abs.h" />
+    <ClInclude Include="src\filter\Add.h" />
+    <ClInclude Include="src\filter\Billow.h" />
+    <ClInclude Include="src\filter\Blend.h" />
+    <ClInclude Include="src\filter\CheckerBoard.h" />
+    <ClInclude Include="src\filter\Clamp.h" />
+    <ClInclude Include="src\filter\Const.h" />
+    <ClInclude Include="src\filter\Curve.h" />
+    <ClInclude Include="src\filter\Derivative.h" />
+    <ClInclude Include="src\filter\Displace.h" />
+    <ClInclude Include="src\filter\Exponent.h" />
+    <ClInclude Include="src\filter\Filter.h" />
+    <ClInclude Include="src\filter\Filters.h" />
+    <ClInclude Include="src\filter\Invert.h" />
+    <ClInclude Include="src\filter\Lambert.h" />
+    <ClInclude Include="src\filter\Max.h" />
+    <ClInclude Include="src\filter\Min.h" />
+    <ClInclude Include="src\filter\Multiply.h" />
+    <ClInclude Include="src\filter\Perlin.h" />
+    <ClInclude Include="src\filter\Power.h" />
+    <ClInclude Include="src\filter\Quantizer.h" />
+    <ClInclude Include="src\filter\RidgedMulti.h" />
+    <ClInclude Include="src\filter\ScaleBias.h" />
+    <ClInclude Include="src\filter\ScalePoint.h" />
+    <ClInclude Include="src\gen\gen.h" />
+    <ClInclude Include="src\gfx\BMPTypes.h" />
+    <ClInclude Include="src\gfx\gfx.h" />
     <ClInclude Include="src\main.h" />
+    <ClInclude Include="src\noise\Interpolation.h" />
+    <ClInclude Include="src\noise\NoiseGen.h" />
+    <ClInclude Include="src\noise\VectorTable.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\file\Chunk.cpp" />
     <ClCompile Include="src\file\Deflate.cpp" />
     <ClCompile Include="src\file\FileSystem.cpp" />
     <ClCompile Include="src\file\Region.cpp" />
+    <ClCompile Include="src\filter\Billow.cpp" />
+    <ClCompile Include="src\filter\Curve.cpp" />
+    <ClCompile Include="src\filter\Perlin.cpp" />
+    <ClCompile Include="src\filter\RidgedMulti.cpp" />
+    <ClCompile Include="src\gen\gen.cpp" />
+    <ClCompile Include="src\gfx\BMPFile.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\noise\NoiseGen.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,6 @@
 #include "main.h"
 #include "file/Region.h"
+#include "gen/gen.h"
 
 // ============================================================================
 static const std::string strFolder = "g:\\Temp\\test08\\Region\\";
@@ -65,6 +66,7 @@ void testRegionParsing()
 // ============================================================================
 int main()
 {
-  testRegionEncoding();
+  //testRegionEncoding();
+  gen::generateHeightMap();
   return 0;
 }
