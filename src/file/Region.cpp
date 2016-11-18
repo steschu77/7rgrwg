@@ -4,6 +4,20 @@
 #include "FileSystem.h"
 
 // ============================================================================
+void file::encodeRegion(region_t** ppRegion, int rx, int rz)
+{
+  region_t* pRegion = new region_t(rx, rz);
+
+  for (int z = 0; z < 32; z++) {
+    for (int x = 0; x < 32; x++) {
+      file::encodeChunk(&pRegion->chunk[z][x], x, z, rx, rz);
+    }
+  }
+
+  *ppRegion = pRegion;
+}
+
+// ============================================================================
 void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx, int rz)
 {
   std::stringstream s;
@@ -19,18 +33,9 @@ void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx,
 
   for (int z = 0; z < 32; z++) {
     for (int x = 0; x < 32; x++) {
-      //file::loadChunk(p7rg+4, x, z, rx, rz, &pRegion->chunk[z][x]);
-      file::encodeChunk(&pRegion->chunk[z][x], x, z, rx, rz);
+      file::loadChunk(p7rg+4, x, z, rx, rz, &pRegion->chunk[z][x]);
     }
   }
-
-/*  for (int z = 0; z < 32; z++) {
-    for (int x = 0; x < 32; x++) {
-      if (pRegion->chunk[z][x] != nullptr) {
-        file::decodeChunk(pRegion->chunk[z][x]);
-      }
-    }
-  }*/
 
   delete[] p7rg;
 

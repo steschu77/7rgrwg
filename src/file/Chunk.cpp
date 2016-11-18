@@ -5,6 +5,12 @@
 #include "Deflate.h"
 
 // ============================================================================
+template <typename T>
+T size_cast(size_t c) {
+  return static_cast<T>(c);
+}
+
+// ============================================================================
 void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t** ppChunk)
 {
   int tx = (rx < 0) ? ((x + 1) & 31) : (x);
@@ -95,15 +101,9 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
     return;
   }
 
-  //int x = pChunk->x;
-  //int z = pChunk->z;
-
   const int* pConstCoords = reinterpret_cast<const int*>(pChunk->pZipped);
   int* pCoords = const_cast<int*>(pConstCoords);
 
-  //int x0 = pCoords[0];
-  //int z0 = pCoords[2];
-  
   int tx = (rx < 0) ? ((x + 1) & 31) : (x);
   int tz = (rz < 0) ? ((z + 1) & 31) : (z);
 
@@ -129,6 +129,10 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
   char fileName[32] ={0};
   int fileNameLength = sprintf(fileName, "%d/%d", cx, cz);
 
+  size_t outsize = 0;
+  unsigned char* out = nullptr;
+
+  file::deflate(&out, &outsize, pChunk->pZipped, pChunk->cZipped);
   uint32_t crc32 = file::crc32(pChunk->pZipped, pChunk->cZipped);
 
   ZipLocalFileHeader* pLocalHead = reinterpret_cast<ZipLocalFileHeader*>(ptr);
@@ -141,30 +145,19 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
   pLocalHead->fileTime = 29546;
   pLocalHead->fileDate = 18760;
   pLocalHead->crc32 = crc32;
-  pLocalHead->sizeCompressed = pChunk->cDeflate;
-  pLocalHead->sizeUncompressed = pChunk->cZipped;
+  pLocalHead->sizeCompressed = size_cast<uint32_t>(outsize);
+  pLocalHead->sizeUncompressed = size_cast<uint32_t>(pChunk->cZipped);
   pLocalHead->fileNameLength = fileNameLength;
   pLocalHead->extraFieldLength = 0;
 
   memcpy(ptr, fileName, fileNameLength);
   ptr += pLocalHead->fileNameLength;
-
   ptr += pLocalHead->extraFieldLength;
 
-  size_t outsize = 0;
-  unsigned char* out = nullptr;
-
-  const unsigned char* in = pChunk->pZipped;
-  size_t insize = pChunk->cZipped;
-
-  file::deflate(&out, &outsize, in, insize);
-  pLocalHead->sizeCompressed = outsize;
-
   memcpy(ptr, out, outsize);
-  free(out);
+  ptr += outsize;
 
-  //memcpy(ptr, pChunk->pDeflate, pChunk->cDeflate);
-  ptr += pLocalHead->sizeCompressed;
+  free(out);
 
   size_t cFileHead = 0;
   size_t ofsFileHead = ptr - (p7rg + 5 + 8);
@@ -180,8 +173,8 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
   pFileHead->fileTime = 29546;
   pFileHead->fileDate = 18760;
   pFileHead->crc32 = crc32;
-  pFileHead->sizeCompressed = pChunk->cDeflate;
-  pFileHead->sizeUncompressed = pChunk->cZipped;
+  pFileHead->sizeCompressed = pLocalHead->sizeCompressed;
+  pFileHead->sizeUncompressed = pLocalHead->sizeUncompressed;
   pFileHead->fileNameLength = fileNameLength;
   pFileHead->extraFieldLength = 0;
   pFileHead->fileCommentLength = 0;
@@ -210,8 +203,8 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
   pDirEnd->discStart = 0;
   pDirEnd->thisCentralDirEntries = 1;
   pDirEnd->centralDirEntries = 1;
-  pDirEnd->centralDirSize = cFileHead;
-  pDirEnd->centralDirStart = ofsFileHead;
+  pDirEnd->centralDirSize = size_cast<uint32_t>(cFileHead);
+  pDirEnd->centralDirStart = size_cast<uint32_t>(ofsFileHead);
   pDirEnd->zipFileCommentLength = 0;
 
   ptr += sizeof(ZipCentralDirEnd);
@@ -236,8 +229,6 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
 void file::decodeChunk(chunk_t* pChunk)
 {
   const unsigned char* out = pChunk->pZipped;
-  size_t outsize = pChunk->cZipped;
-
   const unsigned char* p0 = out;
 
   // xx xx xx xx yy yy yy yy zz zz zz zz 18 ab 01 00 00 00 00 00
@@ -474,7 +465,7 @@ void file::encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz)
   _encodeBlockSection(&ptr, 12);
   _encodeNoExtendedBlocks(&ptr);
 
-  _encodeBlockSection(&ptr, x+16*z);
+  _encodeBlockSection(&ptr, 1);
   _encodeNoExtendedBlocks(&ptr);
 
   for (int i = 2; i < sections; i++) {

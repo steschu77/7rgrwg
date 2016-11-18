@@ -3,6 +3,15 @@
 struct chunk_t
 {
   chunk_t(int x=0, int z=0) : x(x), z(z) {}
+  ~chunk_t() {
+    delete[] pRaw;
+    delete[] pZipped;
+    delete[] p7rg;
+    delete[] pDeflate;
+  }
+
+  chunk_t(const chunk_t&) = delete;
+  chunk_t operator = (const chunk_t&) = delete;
 
   int x, z;
 

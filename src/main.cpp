@@ -1,17 +1,49 @@
 #include "main.h"
 #include "file/Region.h"
 
-const uint8_t Tail[13] = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0
-};
+// ============================================================================
+static const std::string strFolder = "g:\\Temp\\test08\\Region\\";
+static const std::string strFolder2 = "g:\\Temp\\test08\\Region2\\";
 
 // ============================================================================
-int main()
+void testChunkEncoding()
 {
-//*
-  const std::string strFolder = "g:\\Temp\\test08\\Region\\";
-  const std::string strFolder2 = "g:\\Temp\\test08\\Region2\\";
+  const int rx = 0;
+  const int rz = 0;
+  const int x = 0;
+  const int z = 0;
 
+  chunk_t* pChunk = nullptr;
+  file::encodeChunk(&pChunk, x, z, rx, rz);
+  file::decodeChunk(pChunk);
+
+  delete pChunk;
+}
+
+// ============================================================================
+void testRegionEncoding()
+{
+  const int rxStart = -3;
+  const int rzStart =  1;
+  const int rxEnd = -2;
+  const int rzEnd =  2;
+
+  for (int rz = rzStart; rz <= rzEnd; rz++)
+  {
+    for (int rx = rxStart; rx <= rxEnd; rx++)
+    {
+      region_t* pRegion;
+      file::encodeRegion(&pRegion, rx, rz);
+      file::saveRegion(pRegion, strFolder2);
+
+      delete pRegion;
+    }
+  }
+}
+
+// ============================================================================
+void testRegionParsing()
+{
   const int rxStart = -3;
   const int rzStart =  1;
   const int rxEnd = -2;
@@ -24,17 +56,15 @@ int main()
       region_t* pRegion;
       file::loadRegion(&pRegion, strFolder, rx, rz);
       file::saveRegion(pRegion, strFolder2);
+
+      delete pRegion;
     }
-  }/*/
+  }
+}
 
-
-  const char* fName = "g:\\tmp\\test8\\-72\\65";
-  FILE* f = fopen(fName, "rb");
-  const size_t cBuffer = 10000000;
-  uint8_t* buffer = new uint8_t[cBuffer];
-  const size_t cFile = fread(buffer, 1, cBuffer, f);
-  fclose(f);
-
-  analyzeChunk(buffer, cFile);//*/
+// ============================================================================
+int main()
+{
+  testRegionEncoding();
   return 0;
 }
