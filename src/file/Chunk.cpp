@@ -95,7 +95,7 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
 }
 
 // ============================================================================
-void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_t const ** ppBuffer, size_t* pcBuffer)
+void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_t const ** ppBuffer, uint32_t* pcBuffer)
 {
   if (pChunk == nullptr) {
     return;
@@ -210,7 +210,12 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
   ptr += sizeof(ZipCentralDirEnd);
   ptr += pDirEnd->zipFileCommentLength;
 
-  uint32_t c7rg = ptr - p7rg - 5;
+  size_t cChunk = ptr - p7rg;
+  if (cChunk >= std::numeric_limits<uint32_t>::max()) {
+    throw;
+  }
+
+  uint32_t c7rg = static_cast<uint32_t>(cChunk) - 5;
   uint32_t c7rg4k = (c7rg + 0xfff) & ~0xfff;
 
   ptr = p7rg;
@@ -800,12 +805,17 @@ static void createChunkBlockFromHeightMap(uint32_t** ppBlocks, const world::worl
   *ppBlocks = pBlocks;
 
   for (int z = 0; z < 16; ++z) {
-    for (int x = 0; x < 16; ++x) {
-      float height = pWorld->height[16*cz+z][16*cx+x];
+    for (int x = 0; x < 16; ++x)
+    {
+      int wx = 16*cx+x;
+      int wy = 16*cz+z;
+
+      float height = pWorld->height[wy][wx];
       int iHeight = static_cast<int>(height);
+
       for (int y = 0; y < 256; ++y) {
         uint32_t blockId = 0;
-        if (y < iHeight) { blockId = 1; }
+        if (y < iHeight) { blockId = pWorld->block[wy][wx]; }
         pBlocks[x+16*z+16*16*y] = blockId;
       }
     }

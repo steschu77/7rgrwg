@@ -84,7 +84,7 @@ static uint32_t _saveChunk(const region_t* pRegion, int x, int z, FILE* f)
   int rz = pRegion->z;
 
   const uint8_t* pBuffer = nullptr;
-  size_t cBuffer = 0;
+  uint32_t cBuffer = 0;
   file::saveChunk(pRegion->chunk[z][x], x, z, rx, rz, &pBuffer, &cBuffer);
 
   if (f != nullptr) {

@@ -24,3 +24,4 @@
 #include "RidgedMulti.h"
 #include "ScaleBias.h"
 #include "ScalePoint.h"
+#include "WorleyNoise.h"

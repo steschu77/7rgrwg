@@ -1,0 +1,57 @@
+#pragma once
+
+// from
+// "C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die\Data\Config\blocks.xml"
+
+enum BlockIds
+{
+  idAir = 0,
+  idStone = 1,
+  idGrass = 2,
+  idDirt = 3,
+  idPlainsGround = 4,
+  idRadiated = 5,
+  idPotassiumNitrate = 6,
+  idIronOre = 7,
+  idSand = 8,
+  idSnow = 9,
+  idClay = 10,
+  idLeadOre = 11,
+  idBedrock = 12,
+  idSandStone = 13,
+  idDesertGround = 14,
+  idAsphalt = 15,
+  idGravel = 16,
+  // 17 ?
+  idIce = 18,
+  idFertileDirt = 19,
+  idFertileGrass = 20,
+  // idGore = 21,
+  idFertileFarmland = 22,
+  idSliverOre = 23,
+  idBurntForestGround = 24,
+  idForestGround = 25,
+  idDestroyedStone = 26,
+  idCoalOre = 27,
+  idTerrainFiller = 28,
+  idGoldOre = 29,
+  idSod = 30,
+  idHardSod = 31,
+  idWoodDebris = 32,
+  idOilDeposit = 33,
+  idDiamondOre = 34,
+  idFertilizedFarmland = 35,
+
+  idGrassFromDirt = 37,
+  idPlainsGroundFromDirt = 38,
+  idPlainsGroundWGrass1 = 39,
+  idPlainsGroundWGrass2 = 40,
+  idBurntForestGroundFromDirt = 41,
+  idBurntForestGroundWGrass1 = 42,
+  idBurntForestGroundWGrass2 = 43,
+  idForestGroundFromDirt = 44,
+  idForestGroundWGrass1 = 45,
+  idForestGroundWGrass2 = 46,
+  idClayInSandstone = 47,
+  idLootStone = 48,
+};
