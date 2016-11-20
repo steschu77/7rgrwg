@@ -18,6 +18,20 @@ void file::encodeRegion(region_t** ppRegion, int rx, int rz)
 }
 
 // ============================================================================
+void file::encodeRegion(region_t** ppRegion, int rx, int rz, const world::world_t* pWorld)
+{
+  region_t* pRegion = new region_t(rx, rz);
+
+  for (int z = 0; z < 32; z++) {
+    for (int x = 0; x < 32; x++) {
+      file::encodeChunk(&pRegion->chunk[z][x], x, z, rx, rz, pWorld);
+    }
+  }
+
+  *ppRegion = pRegion;
+}
+
+// ============================================================================
 void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx, int rz)
 {
   std::stringstream s;
@@ -40,6 +54,27 @@ void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx,
   delete[] p7rg;
 
   *ppRegion = pRegion;
+}
+
+// ============================================================================
+void file::loadRegionChunk(chunk_t** ppChunk, const std::string& strFolder, int rx, int rz, int cx, int cz)
+{
+  std::stringstream s;
+  s << strFolder << "r." << rx << "." << rz << ".7rg";
+
+  std::string strFile = s.str();
+
+  chunk_t* pChunk = new chunk_t(cx, cz);
+
+  size_t c7rg = 0;
+  uint8_t* p7rg = nullptr;
+  loadFile(&p7rg, &c7rg, strFile.c_str());
+
+  file::loadChunk(p7rg+4, cx, cz, rx, rz, &pChunk);
+
+  delete[] p7rg;
+
+  *ppChunk = pChunk;
 }
 
 // ============================================================================

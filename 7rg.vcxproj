@@ -101,6 +101,7 @@
     <ClInclude Include="src\noise\Interpolation.h" />
     <ClInclude Include="src\noise\NoiseGen.h" />
     <ClInclude Include="src\noise\VectorTable.h" />
+    <ClInclude Include="src\world\World.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\file\Chunk.cpp" />

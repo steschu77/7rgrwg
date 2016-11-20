@@ -4,18 +4,20 @@
 
 struct region_t
 {
-  region_t(int x=0, int z=0) : x(x), z(z) { 
-    for (int z = 0; z < 32; z++) {
-      for (int x = 0; x < 32; x++) {
-        chunk[z][x] = nullptr;
+  region_t(int rx=0, int rz=0) : x(rx), z(rz)
+  {
+    for (int cz = 0; cz < 32; cz++) {
+      for (int cx = 0; cx < 32; cx++) {
+        chunk[cz][cx] = nullptr;
       }
     }
   }
 
-  ~region_t() {
-    for (int z = 0; z < 32; z++) {
-      for (int x = 0; x < 32; x++) {
-        delete chunk[z][x];
+  ~region_t()
+  {
+    for (int cz = 0; cz < 32; cz++) {
+      for (int cx = 0; cx < 32; cx++) {
+        delete chunk[cz][cx];
       }
     }
   }
@@ -31,7 +33,9 @@ struct region_t
 namespace file {
 
 void encodeRegion(region_t** ppRegion, int rx, int rz);
+void encodeRegion(region_t** ppRegion, int rx, int rz, const world::world_t* pWorld);
 void loadRegion(region_t** ppRegion, const std::string& strFolder, int rx, int rz);
 void saveRegion(const region_t* pRegion, const std::string& strFolder);
+void loadRegionChunk(chunk_t** ppChunk, const std::string& strFolder, int rx, int rz, int cx, int cz);
 
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "world/World.h"
+
 struct chunk_t
 {
   chunk_t(int x=0, int z=0) : x(x), z(z) {}
@@ -35,6 +37,8 @@ namespace file {
 void loadChunk(const void* p7rg, int x, int z, int rx, int rz, chunk_t** ppChunk);
 void saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_t const ** ppBuffer, size_t* pcBuffer);
 void decodeChunk(chunk_t* pChunk);
+void compareChunks(const chunk_t* pChunk0, const chunk_t* pChunk1);
 void encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz);
+void encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz, const world::world_t* pWorld);
 
 }
