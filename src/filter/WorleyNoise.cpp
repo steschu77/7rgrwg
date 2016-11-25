@@ -28,24 +28,19 @@ double filter::WorleyNoise::GetValue(double x, double y, double z) const
   double d0 = distance(_Points[0], pt);
   double min0 = d0;
   double min1 = d0;
-  int i0 = 0;
-  int i1 = 0;
 
   for (size_t i = 1; i < _Points.size(); ++i) {
     double d = distance(_Points[i], pt);
     if (d < min0) {
       min1 = min0;
       min0 = d;
-      i0 = i;
     } else if (d < min1) {
       min1 = d;
-      i1 = i;
     }
   }
 
   double dMin0 = sqrt(min0);
   double dMin1 = sqrt(min1);
-  //double dMax = sqrt(distance(_Points[i0], _Points[i1]));
 
   return dMin1 - dMin0;
 }

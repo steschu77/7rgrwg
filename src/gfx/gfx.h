@@ -17,6 +17,14 @@ struct rgba_t
 };
 
 // ============================================================================
+struct point_t
+{
+  point_t(unsigned x, unsigned y);
+
+  unsigned x, y;
+};
+
+// ============================================================================
 union pixel_t
 {
   pixel_t();
@@ -50,7 +58,7 @@ struct plane_size_t
 // ============================================================================
 struct imagegeo_t
 {
-  imagegeo_t(ColorFormat cf, unsigned cx, unsigned cy);
+  explicit imagegeo_t(ColorFormat cf, unsigned cx, unsigned cy);
 
   ColorFormat cf;
   unsigned cx;
@@ -60,18 +68,57 @@ struct imagegeo_t
 // ============================================================================
 struct image_t
 {
-  image_t();
+  explicit image_t();
+  explicit image_t(const stride_t& s, const plane_size_t& psize);
 
   stride_t stride;
   uint8_t* data[3];
   uint32_t* palette;
 };
 
+// ============================================================================
+struct canvas_t
+{
+  explicit canvas_t(unsigned cy);
+  ~canvas_t();
+
+  unsigned cy;
+  unsigned yMin;
+  unsigned yMax;
+
+  int* edge[2];
+};
+
+stride_t gfxStride(ColorFormat cf, unsigned Pels, unsigned Alignment=1);
+plane_size_t gfxPlaneSize(ColorFormat cf, const stride_t& Stride, unsigned Lines);
+size_t gfxBufferSize(const plane_size_t& s);
+
+template <typename T>
+void putPixel(image_t& img, unsigned x, unsigned y, T color);
+
+template <typename T>
+T getPixel(image_t& img, unsigned x, unsigned y);
+
+template <typename T>
+void clear(image_t& img, const imagegeo_t& geo, T color);
+
+void drawLine(image_t& img, int x0, int y0, int x1, int y1, uint32_t color);
+void drawCircle(image_t& img, int x, int y, int r, uint32_t color);
+
+void drawPolyStrip(image_t& img, canvas_t& canvas,
+  const point_t* pVerts, const uint32_t* pColor, size_t cFaces);
+
 void readBMPFileInfo(const char* FName, imagegeo_t* pInfo);
 void readBMPFileData(const char* FName, image_t* pImage);
 void saveBMPFile(const char* FName, const imagegeo_t& geo, const image_t& img, bool Overwrite);
 
 } // namespace gfx
+
+
+// ============================================================================
+inline gfx::point_t::point_t(unsigned x, unsigned y)
+: x(x), y(y)
+{}
 
 // ============================================================================
 inline gfx::pixel_t::pixel_t()
@@ -156,4 +203,93 @@ inline gfx::image_t::image_t()
   data[0] = nullptr;
   data[1] = nullptr;
   data[2] = nullptr;
+}
+
+// ============================================================================
+inline gfx::image_t::image_t(const stride_t& s, const plane_size_t& psize)
+: stride(s)
+, palette(nullptr)
+{
+  data[0] = new uint8_t[psize.p[0]];
+  data[1] = new uint8_t[psize.p[1]];
+  data[2] = new uint8_t[psize.p[2]];
+}
+
+// ============================================================================
+inline gfx::canvas_t::canvas_t(unsigned cy)
+: cy(cy)
+, yMin(0)
+, yMax(cy)
+{
+  edge[0] = new int[cy];
+  edge[1] = new int[cy];
+}
+
+// ============================================================================
+inline gfx::canvas_t::~canvas_t()
+{
+  delete[] edge[0];
+  delete[] edge[1];
+}
+
+// ============================================================================
+inline gfx::stride_t gfx::gfxStride(ColorFormat cf, unsigned Pels, unsigned Alignment)
+{
+  //static_assert((Alignment & (Alignment-1)) == 0, "alignment must be power of 2");
+  unsigned Mask = ~(Alignment - 1);
+
+  switch (cf)
+  {
+  case cfY8:
+    return stride_t((Pels + Alignment - 1) & Mask, 0, 0);
+
+  case cfRGB0888:
+    return stride_t((Pels*3 + Alignment - 1) & Mask, 0, 0);
+
+  case cfRGB8888:
+    return stride_t((Pels*4 + Alignment - 1) & Mask, 0, 0);
+
+  default:
+    return stride_t();
+  }
+}
+
+// ============================================================================
+inline gfx::plane_size_t gfx::gfxPlaneSize(ColorFormat cf, const stride_t& stride, unsigned lines)
+{
+  plane_size_t factor = plane_size_t(1, 0, 0);
+
+  plane_size_t psize;
+  psize.p[0] = stride.p[0] * lines * factor.p[0];
+  psize.p[1] = stride.p[1] * lines * factor.p[1];
+  psize.p[2] = stride.p[2] * lines * factor.p[2];
+  return psize;
+}
+
+// ============================================================================
+template <typename T>
+inline void gfx::putPixel(image_t& img, unsigned x, unsigned y, T color)
+{
+  size_t ofs = y * img.stride.p[0];
+  reinterpret_cast<T*>(&img.data[0][ofs])[x] = color;
+}
+
+// ============================================================================
+template <typename T>
+inline T gfx::getPixel(image_t& img, unsigned x, unsigned y)
+{
+  size_t ofs = y * img.stride.p[0];
+  return reinterpret_cast<T*>(&img.data[0][ofs])[x];
+}
+
+// ============================================================================
+template <typename T>
+inline void gfx::clear(image_t& img, const imagegeo_t& geo, T color)
+{
+  for (unsigned y = 0; y < geo.cy; ++y) {
+    size_t ofs = y * img.stride.p[0];
+    for (unsigned x = 0; x < geo.cx; ++x) {
+      reinterpret_cast<T*>(&img.data[0][ofs])[x] = color;
+    }
+  }
 }

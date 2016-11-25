@@ -95,8 +95,9 @@ void analyzeRegionChunk(int rx, int rz, int cx, int cz, const world::world_t* pW
 // ============================================================================
 int main()
 {
-  world::world_t* pWorld = new world::world_t(2, 2);
-  gen::generateHeightMap(pWorld);
+  world::world_t* pWorld = new world::world_t(1, 1);
+  //gen::generateHeightMap(pWorld);
+  gen::generateSections(pWorld);
 
   //analyzeRegionChunk(0, 0, 0, 0, pWorld);
 

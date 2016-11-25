@@ -4,6 +4,8 @@
 #include "ZipFile.h"
 #include "Deflate.h"
 
+#include "world/BlockIds.h"
+
 // ============================================================================
 template <typename T>
 T size_cast(size_t c) {
@@ -816,6 +818,7 @@ static void createChunkBlockFromHeightMap(uint32_t** ppBlocks, const world::worl
       for (int y = 0; y < 256; ++y) {
         uint32_t blockId = 0;
         if (y < iHeight) { blockId = pWorld->block[wy][wx]; }
+        if (y+1 >= iHeight) { blockId = idGrass; }
         pBlocks[x+16*z+16*16*y] = blockId;
       }
     }

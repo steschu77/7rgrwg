@@ -89,6 +89,7 @@
     <ClInclude Include="src\gen\gen.h" />
     <ClInclude Include="src\gfx\BMPTypes.h" />
     <ClInclude Include="src\gfx\gfx.h" />
+    <ClInclude Include="src\graph\Graph.h" />
     <ClInclude Include="src\main.h" />
     <ClInclude Include="src\noise\Interpolation.h" />
     <ClInclude Include="src\noise\NoiseGen.h" />
@@ -107,6 +108,11 @@
     <ClCompile Include="src\filter\WorleyNoise.cpp" />
     <ClCompile Include="src\gen\gen.cpp" />
     <ClCompile Include="src\gfx\BMPFile.cpp" />
+    <ClCompile Include="src\gfx\Circle.cpp" />
+    <ClCompile Include="src\gfx\Line.cpp" />
+    <ClCompile Include="src\gfx\PolyFlat.cpp" />
+    <ClCompile Include="src\graph\ClipLine.cpp" />
+    <ClCompile Include="src\graph\Voronoi.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\noise\NoiseGen.cpp" />
   </ItemGroup>
