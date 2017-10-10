@@ -32,6 +32,18 @@ void file::encodeRegion(region_t** ppRegion, int rx, int rz, const world::world_
 }
 
 // ============================================================================
+void file::testRegion(const region_t* pRegion, int rx, int rz)
+{
+  for (int z = 0; z < 32; z++) {
+    for (int x = 0; x < 32; x++) {
+      if (pRegion->chunk[z][x] != nullptr) {
+        file::testChunk(pRegion->chunk[z][x], x, z, rx, rz);
+      }
+    }
+  }
+}
+
+// ============================================================================
 void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx, int rz)
 {
   std::stringstream s;

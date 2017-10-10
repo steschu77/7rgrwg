@@ -13,6 +13,12 @@ T size_cast(size_t c) {
 }
 
 // ============================================================================
+void file::testChunk(chunk_t* pChunk, int x, int z, int rx, int rz)
+{
+  decodeChunk(pChunk);
+}
+
+// ============================================================================
 void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t** ppChunk)
 {
   int tx = (rx < 0) ? ((x + 1) & 31) : (x);
@@ -41,7 +47,7 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
   const uint32_t size = * (reinterpret_cast<const uint32_t*>(ptr));
   ptr += sizeof(uint32_t);
 
-  // 00 74 74 63 00 xx xx xx xx, x = version (Alpha 14: 0x21, Alpha 15: 0x22)
+  // 00 74 74 63 00 xx xx xx xx, x = version (Alpha 14: 0x21, Alpha 15: 0x22, Alpha 16: 0x26)
   ptr += 9;
 
   const ZipLocalFileHeader* pLocalHead = reinterpret_cast<const ZipLocalFileHeader*>(ptr);
@@ -87,8 +93,10 @@ void file::loadChunk(const void* buffer, int x, int z, int rx, int rz, chunk_t**
   pChunk->cZipped = outsize;
   pChunk->c7rg = 16 * 16 * 256 * 8;
   pChunk->p7rg = new uint8_t [pChunk->c7rg];
-  pChunk->pDeflate = in;
   pChunk->cDeflate = insize;
+  uint8_t* pDeflate = new uint8_t[pChunk->cDeflate];
+  memcpy(pDeflate, in, insize);
+  pChunk->pDeflate = pDeflate;
   pChunk->crc32Deflate = pFileHead->crc32;
 
   memset(pChunk->p7rg, 0, pChunk->c7rg);
@@ -124,7 +132,7 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
   memcpy(ptr, head, 5);
   ptr += 5;
 
-  uint32_t version = 0x22; // Alpha 15
+  uint32_t version = 0x26; // Alpha 16
   *(reinterpret_cast<uint32_t*>(ptr)) = version;
   ptr += sizeof(uint32_t);
 
@@ -233,44 +241,86 @@ void file::saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_
 }
 
 // ============================================================================
+static bool decodeBlocks(uint32_t** ppBlocks, const unsigned char** pout)
+{
+  const unsigned char* out = *pout;
+
+  uint32_t* pBlocks = new uint32_t[16 * 16 * 256];
+  *ppBlocks = pBlocks;
+
+  uint32_t* pSection = pBlocks;
+
+  bool bspdmain = false;
+
+  const int sections = 64;
+  for (int i = 0; i < sections; i++, pSection += 16*16*4)
+  {
+    if (out[0] == 0) {
+      out += 1;
+      std::fill_n(pSection, 16 * 16 * 4, 0);
+      continue;
+    }
+    if (out[1] == 0) {
+      std::fill_n(pSection, 16 * 16 * 4, out[2]);
+      out += 2;
+      out += 1;
+    }
+    else {
+      out += 2;
+      std::copy_n(out, 16 * 16 * 4, pSection);
+      out += 16 * 16 * 4;
+    }
+    if (out[0] == 0) {
+      out += 1;
+      continue;
+    }
+    if (out[0] == 1) {
+      out += 1;
+      out += 16 * 16 * 4 * 3;
+      bspdmain = true;
+      continue;
+    }
+    throw;
+  }
+
+  *pout = out;
+  return bspdmain;
+}
+
+// ============================================================================
 void file::decodeChunk(chunk_t* pChunk)
 {
   const unsigned char* out = pChunk->pZipped;
   const unsigned char* p0 = out;
 
   // xx xx xx xx yy yy yy yy zz zz zz zz 18 ab 01 00 00 00 00 00
+  const int* pCoords = reinterpret_cast<const int*>(out);
+  int cx = pCoords[0];
+  int cz = pCoords[2];
+
+  int rx = cx / 32;
+  int tx = cx % 32;
+  int rz = cz / 32;
+  int tz = cz % 32;
+
+  printf("%4d %4d\r", cx, cz);
+  if (cx == 0 && cz == 17) {
+    printf("");
+  }
+
   out += 0x14;
 
   const int sections = 64;
-  for (int i = 0; i < sections; i++)
-  {
-    printf("b: %4d %06x  %02x", i, (int)(out-p0), out[0]);
-    if (out[0] == 0) {
-      out += 1;
-      printf("\n");
-      continue;
-    }
-    printf(" %02x", out[1]);
-    if (out[1] == 0) {
-      out += 2;
-      out += 1;
-    } else {
-      out += 2;
-      out += 16 * 16 * 4;
-    }
-    printf(" %02x\n", out[0]);
-    if (out[0] == 0) {
-      out += 1;
-    } else {
-      out += 1;
-      out += 16 * 16 * 4 * 3;
-    }
+
+  if (pChunk->pBlocks != nullptr) {
+    throw;
   }
+
+  bool bspdmain = decodeBlocks(&pChunk->pBlocks, &out);
 
   // 0f: solid, 00 air
   for (int i = 0; i < sections; i++)
   {
-    printf("x: %4d %06x  %02x\n", i, (int)(out-p0), out[0]);
     if (out[0] == 0) {
       out += 1;
       out += 16 * 16 * 4;
@@ -281,12 +331,14 @@ void file::decodeChunk(chunk_t* pChunk)
   }
 
   // Height Map
+  std::copy_n(out, 16 * 16, pChunk->pHeightMap);
   out += 16 * 16;
 
   // Another Height Map (without ground decorations?)
   out += 16 * 16;
 
   // All 03's Map (biome?, 03 = pine forest)
+  std::copy_n(out, 16 * 16, pChunk->pBiomesMap);
   out += 16 * 16;
 
   // 03 00 00 00 0F 00 Map
@@ -297,9 +349,21 @@ void file::decodeChunk(chunk_t* pChunk)
   out += 2;
 
   // 00 00
-  // 01 00 09 bspd.main ff ff ff ff ff ff ff ff 00 02 00 01 00
+  // 01 00 09 bspd.main ff ff ff ff ff ff ff ff 00 02 00 01 xx
   if (*out != 0) {
-    out += 25;
+    int numBlocks = *out;
+    out += 1;
+    for (int i = 0; i < numBlocks; i++) {
+      int strLength = out[1];
+      out += 2;
+      out += strLength;
+      out += 8;
+      int datLength = out[1];
+      out += 2;
+      out += datLength;
+      bspdmain = true;
+    }
+    out += 1;
   }
   else {
     out += 2;
@@ -315,15 +379,17 @@ void file::decodeChunk(chunk_t* pChunk)
   out += 16 * 16;
 
   // fill level? -128 .. 127 (solid .. air)
-  for (int i = 0; i < sections; i++)
+  int8_t* pSection = pChunk->pFillLevel;
+  for (int i = 0; i < sections; i++, pSection+=16*16*4)
   {
-    printf("y: %4d %06x  %02x\n", i, (int)(out-p0), out[0]);
     if (out[0] == 0) {
       out += 1;
+      std::copy_n(out, 16 * 16 * 4, pSection);
       out += 16 * 16 * 4;
     }
     else {
       out += 1;
+      std::fill_n(pSection, 16 * 16 * 4, out[0]);
       out += 1;
     }
   }
@@ -331,7 +397,6 @@ void file::decodeChunk(chunk_t* pChunk)
   // 00: solid, 0f: air
   for (int i = 0; i < sections; i++)
   {
-    printf("z: %4d %06x  %02x\n", i, (int)(out-p0), out[0]);
     if (out[0] == 0) {
       out += 1;
       out += 16 * 16 * 4;
@@ -343,30 +408,36 @@ void file::decodeChunk(chunk_t* pChunk)
   }
 
   // all 0
+  int cElement = bspdmain ? 2 : 1;
   for (int i = 0; i < sections; i++)
   {
-    printf("i: %4d %06x  %02x\n", i, (int)(out-p0), out[0]);
     if (out[0] == 0) {
       out += 1;
-      out += 16 * 16 * 4;
+      out += 16 * 16 * 4 * cElement;
     }
     else {
       out += 1;
-      out += 1;
+      out += cElement;
     }
   }
 
-  // block damage
-  for (int i = 0; i < sections; i++)
+  if (bspdmain) {
+    // 01 00 00 00 00 00 00
+    out += 7 * sections;
+  }
+  else
   {
-    printf("j: %4d %06x  %02x\n", i, (int)(out-p0), out[0]);
-    if (out[0] == 0) {
-      out += 1;
-      out += 16 * 16 * 4;
-    }
-    else {
-      out += 1;
-      out += 1;
+    // block damage
+    for (int i = 0; i < sections; i++)
+    {
+      if (out[0] == 0) {
+        out += 1;
+        out += 16 * 16 * 4;
+      }
+      else {
+        out += 1;
+        out += 1;
+      }
     }
   }
 
@@ -817,8 +888,8 @@ static void createChunkBlockFromHeightMap(uint32_t** ppBlocks, const world::worl
 
       for (int y = 0; y < 256; ++y) {
         uint32_t blockId = 0;
-        if (y < iHeight) { blockId = pWorld->block[wy][wx]; }
-        if (y+1 >= iHeight) { blockId = idGrass; }
+        if (y < iHeight) { blockId = idStone; }
+        if (y+1 >= iHeight) { blockId = pWorld->block[wy][wx]; }
         pBlocks[x+16*z+16*16*y] = blockId;
       }
     }

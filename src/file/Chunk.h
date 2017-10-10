@@ -30,10 +30,16 @@ struct chunk_t
   const uint8_t* pDeflate = nullptr;
   size_t cDeflate = 0;
   uint32_t crc32Deflate = 0;
+
+  uint32_t* pBlocks = nullptr;
+  int8_t  pFillLevel[16*16*256];
+  uint8_t pHeightMap[16*16];
+  uint8_t pBiomesMap[16 * 16];
 };
 
 namespace file {
 
+void testChunk(chunk_t* pChunk, int x, int z, int rx, int rz);
 void loadChunk(const void* p7rg, int x, int z, int rx, int rz, chunk_t** ppChunk);
 void saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_t const ** ppBuffer, uint32_t* pcBuffer);
 void decodeChunk(chunk_t* pChunk);
