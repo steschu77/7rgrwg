@@ -60,6 +60,9 @@ void file::loadRegion(region_t** ppRegion, const std::string& strFolder, int rx,
   for (int z = 0; z < 32; z++) {
     for (int x = 0; x < 32; x++) {
       file::loadChunk(p7rg+4, x, z, rx, rz, &pRegion->chunk[z][x]);
+      if (pRegion->chunk[z][x] != nullptr) {
+        file::decodeChunk(pRegion->chunk[z][x]);
+      }
     }
   }
 
@@ -97,7 +100,14 @@ static uint32_t _saveChunk(const region_t* pRegion, int x, int z, FILE* f)
 
   const uint8_t* pBuffer = nullptr;
   uint32_t cBuffer = 0;
-  file::saveChunk(pRegion->chunk[z][x], x, z, rx, rz, &pBuffer, &cBuffer);
+
+  if (pRegion->chunk[z][x] != nullptr) {
+    pBuffer = pRegion->chunk[z][x]->pRaw;
+    cBuffer = pRegion->chunk[z][x]->cRaw4k;
+  }
+
+  //file::saveChunk(pRegion->chunk[z][x], x, z, rx, rz, &pBuffer, &cBuffer);
+  file::saveChunk(pRegion->chunk[0][0], x, z, rx, rz, &pBuffer, &cBuffer);
 
   if (f != nullptr) {
     fwrite(pBuffer, 1u, cBuffer, f);
@@ -123,6 +133,8 @@ void file::saveRegion(const region_t* pRegion, const std::string& strFolder)
   const uint32_t initialOffset = 0x3000u;
   uint32_t index[initialOffset/4] = { 0 };
   uint32_t offset = initialOffset;
+
+  file::encodeChunk(pRegion->chunk[0][0], rx, rz);
 
   for (int z = 0; z < 32; z++) {
     for (int x = 0; x < 32; x++) {

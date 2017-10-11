@@ -32,7 +32,7 @@ struct chunk_t
   uint32_t crc32Deflate = 0;
 
   uint32_t* pBlocks = nullptr;
-  int8_t  pFillLevel[16*16*256];
+  uint8_t  pFillLevel[16*16*256];
   uint8_t pHeightMap[16*16];
   uint8_t pBiomesMap[16 * 16];
 };
@@ -46,5 +46,6 @@ void decodeChunk(chunk_t* pChunk);
 void compareChunks(const chunk_t* pChunk0, const chunk_t* pChunk1);
 void encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz);
 void encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz, const world::world_t* pWorld);
+void encodeChunk(chunk_t* pChunk, int rx, int rz);
 
 }

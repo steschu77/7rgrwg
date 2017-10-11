@@ -379,7 +379,7 @@ void file::decodeChunk(chunk_t* pChunk)
   out += 16 * 16;
 
   // fill level? -128 .. 127 (solid .. air)
-  int8_t* pSection = pChunk->pFillLevel;
+  uint8_t* pSection = pChunk->pFillLevel;
   for (int i = 0; i < sections; i++, pSection+=16*16*4)
   {
     if (out[0] == 0) {
@@ -441,8 +441,8 @@ void file::decodeChunk(chunk_t* pChunk)
     }
   }
 
-  // const unsigned char* p1 = out;
-  // const unsigned char* p2 = p0 + outsize;
+  const unsigned char* p1 = out;
+  const unsigned char* p2 = p0 + pChunk->cZipped;
   // p1 .. p2: 01 00 00 00 00 00 00 00 00 00 00 01 00
 }
 
@@ -897,6 +897,38 @@ static void createChunkBlockFromHeightMap(uint32_t** ppBlocks, const world::worl
 }
 
 // ============================================================================
+static void createChunkAirFromBlocks(uint8_t** ppAir, const uint32_t* pBlocks)
+{
+  uint8_t* pAir = new uint8_t[16 * 16 * 256];
+  *ppAir = pAir;
+
+  for (int z = 0; z < 16; ++z) {
+    for (int x = 0; x < 16; ++x) {
+      for (int y = 0; y < 256; ++y) {
+        uint8_t airId = (pBlocks[x + 16 * z + 16 * 16 * y] == idAir) ? 0 : 0x0f;
+        pAir[x + 16 * z + 16 * 16 * y] = airId;
+      }
+    }
+  }
+}
+
+// ============================================================================
+static void createChunkNonAirFromBlocks(uint8_t** ppAir, const uint32_t* pBlocks)
+{
+  uint8_t* pAir = new uint8_t[16 * 16 * 256];
+  *ppAir = pAir;
+
+  for (int z = 0; z < 16; ++z) {
+    for (int x = 0; x < 16; ++x) {
+      for (int y = 0; y < 256; ++y) {
+        uint8_t airId = (pBlocks[x + 16 * z + 16 * 16 * y] == idAir) ? 0x0f : 0;
+        pAir[x + 16 * z + 16 * 16 * y] = airId;
+      }
+    }
+  }
+}
+
+// ============================================================================
 static void createChunkAirFromHeightMap(uint8_t** ppBlocks, const world::world_t* pWorld, int cx, int cz)
 {
   uint8_t* pBlocks = new uint8_t[16*16*256];
@@ -1176,4 +1208,177 @@ void file::encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz, const wo
   pChunk->cZipped = ptr - p0;
 
   *ppChunk = pChunk;
+}
+
+// ============================================================================
+void file::encodeChunk(chunk_t* pChunk, int rx, int rz)
+{
+  FILE* f = fopen("orig.7rg", "wb");
+  fwrite(pChunk->pZipped, 1, pChunk->cZipped, f);
+  fclose(f);
+
+  const size_t cZipped = 16 * 16 * 256 * 8;
+  uint8_t* pZipped = new uint8_t[cZipped];
+  memset(pZipped, 0, cZipped);
+
+  pChunk->pZipped = pZipped;
+
+  uint8_t* p0 = pZipped;
+  uint8_t* ptr = pZipped;
+
+  // xx xx xx xx yy yy yy yy zz zz zz zz 18 ab 01 00 00 00 00 00
+  int* pCoords = reinterpret_cast<int*>(ptr);
+  int x = pChunk->x;
+  int z = pChunk->z;
+  int tx = (rx < 0) ? ((x + 1) & 31) : (x);
+  int tz = (rz < 0) ? ((z + 1) & 31) : (z);
+
+  int cx = 32 * rx + tx;
+  int cz = 32 * rz + tz;
+
+  pCoords[0] = cx;
+  pCoords[1] = 0;
+  pCoords[2] = cz;
+  pCoords[3] = 0;
+  pCoords[4] = 0;
+  ptr += 0x14;
+
+  const int sections = 64;
+  const uint32_t* pBlocks = pChunk->pBlocks;
+
+  for (int i = 0; i < sections; i++)
+  {
+    uint32_t blockId = 0;
+    if (allBlocksEqual(pBlocks, i, &blockId)) {
+      if (blockId == 0) {
+        _encodeAirBlockSection(&ptr);
+      }
+      else {
+        _encodeBlockSection(&ptr, blockId);
+        _encodeNoExtendedBlocks(&ptr);
+      }
+    }
+    else {
+      _encodeBlockSection(&ptr, pBlocks, i);
+      _encodeNoExtendedBlocks(&ptr);
+    }
+  }
+
+  // 0f: solid, 00 air
+  uint8_t* pAir = nullptr;
+  createChunkAirFromBlocks(&pAir, pBlocks);
+
+  for (int i = 0; i < sections; i++)
+  {
+    uint8_t blockId = 0;
+    if (allBlocksEqual(pAir, i, &blockId)) {
+      _encodeRLESectionFill(&ptr, blockId);
+    }
+    else {
+      _encodeRLESectionCopy(&ptr, pAir, i);
+    }
+  }
+
+  delete pAir;
+  pAir = nullptr;
+
+  // Height Map
+  memcpy(ptr, pChunk->pHeightMap, 16 * 16);
+  ptr += 16 * 16;
+
+  // Another Height Map (without ground decorations?)
+  memcpy(ptr, pChunk->pHeightMap, 16 * 16);
+  ptr += 16 * 16;
+
+  // All 03's Map (biome?, 03 = pine forest)
+  memcpy(ptr, pChunk->pBiomesMap, 16 * 16);
+  ptr += 16 * 16;
+
+  // 03 00 00 00 0F 00 Map
+  // 00 00 00 00 0F 00 Map
+  for (int i = 0; i < 16 * 16 * 6; i += 6) {
+    ptr[i] = 0x03;
+    ptr[i + 1] = 0x00;
+    ptr[i + 2] = 0x00;
+    ptr[i + 3] = 0x00;
+    ptr[i + 4] = 0xff;
+    ptr[i + 5] = 0x00;
+  }
+  ptr += 16 * 16 * 6;
+
+  // ??
+  ptr[0] = 0x00;
+  ptr[1] = 0xff;
+  ptr[2] = 0x00;
+  ptr[3] = 0x00;
+  ptr += 4;
+
+  // +/- something Map
+  memset(ptr, 0, 16 * 16);
+  ptr += 16 * 16;
+
+  // 7d/7E Map 
+  memset(ptr, 0x7d, 16 * 16);
+  ptr += 16 * 16;
+
+  // +/- something Map
+  memset(ptr, 0, 16 * 16);
+  ptr += 16 * 16;
+
+  // fill level? -128 .. 127 (solid .. air)
+  const uint8_t* pLevel = pChunk->pFillLevel;
+  for (int i = 0; i < sections; i++)
+  {
+    uint8_t level = 0;
+    if (allBlocksEqual(pLevel, i, &level)) {
+      _encodeRLESectionFill(&ptr, level);
+    }
+    else {
+      _encodeRLESectionCopy(&ptr, pLevel, i);
+    }
+  }
+
+  // 00: solid, 0f: air, 0a: ??
+  uint8_t* pNonAir = nullptr;
+  createChunkNonAirFromBlocks(&pNonAir, pBlocks);
+
+  for (int i = 0; i < sections; i++)
+  {
+    uint8_t blockId = 0;
+    if (allBlocksEqual(pNonAir, i, &blockId)) {
+      _encodeRLESectionFill(&ptr, blockId);
+    }
+    else {
+      _encodeRLESectionCopy(&ptr, pNonAir, i);
+    }
+  }
+
+  delete[] pNonAir;
+  pNonAir = nullptr;
+
+  // all 0
+  for (int i = 0; i < sections; i++) {
+    _encodeRLESectionFill(&ptr, 0x00);
+  }
+
+  // block damage
+  for (int i = 0; i < sections; i++) {
+    _encodeRLESectionFill(&ptr, 0x00);
+  }
+
+  // const unsigned char* p1 = out;
+  // const unsigned char* p2 = p0 + outsize;
+  // p1 .. p2: 01 00 00 00 00 00 00 00 00 00 00 01 00 00
+  const uint8_t Footer[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0
+  };
+
+  memcpy(ptr, Footer, sizeof(Footer));
+  ptr += sizeof(Footer);
+
+  pChunk->cZipped = ptr - p0;
+
+  f = fopen("new.7rg", "wb");
+  fwrite(pChunk->pZipped, 1, pChunk->cZipped, f);
+  fclose(f);
 }
