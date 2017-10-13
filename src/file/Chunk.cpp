@@ -276,6 +276,13 @@ static bool decodeBlocks(uint32_t** ppBlocks, const unsigned char** pout)
     }
     if (out[0] == 1) {
       out += 1;
+      for (int j = 0; j < 16 * 16 * 4; j++) {
+        uint32_t ext = (out[3 * j] << 8) | (out[3 * j + 1] << 16) | (out[3 * j + 2] << 24);
+        if (ext != 0) {
+          printf("");
+        }
+        pSection[j] |= ext;
+      }
       out += 16 * 16 * 4 * 3;
       bspdmain = true;
       continue;
@@ -345,6 +352,8 @@ void file::decodeChunk(chunk_t* pChunk)
   // 00 00 00 00 0F 00 Map
   out += 16 * 16 * 6;
 
+  const unsigned char* vars = out;
+
   // 00 ff
   out += 2;
 
@@ -368,6 +377,10 @@ void file::decodeChunk(chunk_t* pChunk)
   else {
     out += 2;
   }
+
+  pChunk->cVars = out - vars;
+  pChunk->pVars = new uint8_t[pChunk->cVars];
+  memcpy(pChunk->pVars, vars, pChunk->cVars);
 
   // +/- something Map
   out += 16 * 16;
@@ -447,220 +460,6 @@ void file::decodeChunk(chunk_t* pChunk)
 }
 
 // ============================================================================
-void file::compareChunks(const chunk_t* pChunk0, const chunk_t* pChunk1)
-{
-  const uint8_t* ptr0 = pChunk0->pZipped;
-  const uint8_t* ptr1 = pChunk1->pZipped;
-
-  // xx xx xx xx yy yy yy yy zz zz zz zz 18 ab 01 00 00 00 00 00
-  ptr0 += 0x14;
-  ptr1 += 0x14;
-
-  const int sections = 64;
-  for (int i = 0; i < sections; i++)
-  {
-    if (ptr0[0] == 0) {
-      ptr0 += 1;
-    } else {
-      if (ptr0[1] == 0) {
-        ptr0 += 2;
-        ptr0 += 1;
-      }
-      else {
-        ptr0 += 2;
-        ptr0 += 16 * 16 * 4;
-      }
-
-      if (ptr0[0] == 0) {
-        ptr0 += 1;
-      }
-      else {
-        ptr0 += 1;
-        ptr0 += 16 * 16 * 4 * 3;
-      }
-    }
-
-    if (ptr1[0] == 0) {
-      ptr1 += 1;
-    }
-    else {
-      if (ptr1[1] == 0) {
-        ptr1 += 2;
-        ptr1 += 1;
-      }
-      else {
-        ptr1 += 2;
-        ptr1 += 16 * 16 * 4;
-      }
-
-      if (ptr1[0] == 0) {
-        ptr1 += 1;
-      }
-      else {
-        ptr1 += 1;
-        ptr1 += 16 * 16 * 4 * 3;
-      }
-    }
-  }
-
-  // 0f: solid, 00 air
-  for (int i = 0; i < sections; i++)
-  {
-    if (ptr0[0] == 0) {
-      ptr0 += 1;
-      ptr0 += 16 * 16 * 4;
-    }
-    else {
-      ptr0 += 1;
-      ptr0 += 1;
-    }
-
-    if (ptr1[0] == 0) {
-      ptr1 += 1;
-      ptr1 += 16 * 16 * 4;
-    }
-    else {
-      ptr1 += 1;
-      ptr1 += 1;
-    }
-  }
-
-  // Height Map
-  ptr0 += 16 * 16;
-  ptr1 += 16 * 16;
-
-  // Another Height Map (without ground decorations?)
-  ptr0 += 16 * 16;
-  ptr1 += 16 * 16;
-
-  // All 03's Map (biome?, 03 = pine forest)
-  ptr0 += 16 * 16;
-  ptr1 += 16 * 16;
-
-  // 03 0C 00 00 0F 00 Map
-  // 03 00 00 00 0F 00 Map
-  // 00 00 00 00 0F 00 Map
-  ptr0 += 16 * 16 * 6;
-  ptr1 += 16 * 16 * 6;
-
-  // 00 ff 00 00
-  ptr0 += 2;
-  ptr1 += 2;
-
-  // 00 00
-  // 01 00 09 bspd.main ff ff ff ff ff ff ff ff 00 02 00 01 00
-  if (*ptr0 != 0) {
-    ptr0 += 25;
-  } else {
-    ptr0 += 2;
-  }
-
-  ptr1 += 2;
-
-  // +/- something Map
-  ptr0 += 16 * 16;
-  ptr1 += 16 * 16;
-
-  // 7d/7E Map 
-  ptr0 += 16 * 16;
-  ptr1 += 16 * 16;
-
-  // +/- something Map
-  ptr0 += 16 * 16;
-  ptr1 += 16 * 16;
-
-  // fill level? -128 .. 127 (solid .. air)
-  for (int i = 0; i < sections; i++)
-  {
-    if (ptr0[0] == 0) {
-      ptr0 += 1;
-      ptr0 += 16 * 16 * 4;
-    }
-    else {
-      ptr0 += 1;
-      ptr0 += 1;
-    }
-
-    if (ptr1[0] == 0) {
-      ptr1 += 1;
-      ptr1 += 16 * 16 * 4;
-    }
-    else {
-      ptr1 += 1;
-      ptr1 += 1;
-    }
-  }
-
-  // 00: solid, 0f: air
-  for (int i = 0; i < sections; i++)
-  {
-    if (ptr0[0] == 0) {
-      ptr0 += 1;
-      ptr0 += 16 * 16 * 4;
-    }
-    else {
-      ptr0 += 1;
-      ptr0 += 1;
-    }
-
-    if (ptr1[0] == 0) {
-      ptr1 += 1;
-      ptr1 += 16 * 16 * 4;
-    }
-    else {
-      ptr1 += 1;
-      ptr1 += 1;
-    }
-  }
-
-  // all 0
-  for (int i = 0; i < sections; i++)
-  {
-    if (ptr0[0] == 0) {
-      ptr0 += 1;
-      ptr0 += 16 * 16 * 4;
-    }
-    else {
-      ptr0 += 1;
-      ptr0 += 1;
-    }
-    if (ptr1[0] == 0) {
-      ptr1 += 1;
-      ptr1 += 16 * 16 * 4;
-    }
-    else {
-      ptr1 += 1;
-      ptr1 += 1;
-    }
-  }
-
-  // block damage
-  for (int i = 0; i < sections; i++)
-  {
-    if (ptr0[0] == 0) {
-      ptr0 += 1;
-      ptr0 += 16 * 16 * 4;
-    }
-    else {
-      ptr0 += 1;
-      ptr0 += 1;
-    }
-    if (ptr1[0] == 0) {
-      ptr1 += 1;
-      ptr1 += 16 * 16 * 4;
-    }
-    else {
-      ptr1 += 1;
-      ptr1 += 1;
-    }
-  }
-
-  // const unsigned char* p1 = out;
-  // const unsigned char* p2 = p0 + outsize;
-  // p1 .. p2: 01 00 00 00 00 00 00 00 00 00 00 01 00
-}
-
-// ============================================================================
 void _encodeAirBlockSection(uint8_t** ptr)
 {
   (*ptr)[0] = 0;
@@ -693,6 +492,23 @@ void _encodeBlockSection(uint8_t** ptr, const uint32_t* p, int section)
 }
 
 // ============================================================================
+void _encodeExtendedBlocks(uint8_t** ptr, const uint32_t* p, int section)
+{
+  p += 4 * 16 * 16 * section;
+
+  (*ptr)[0] = 1;
+  (*ptr) += 1;
+
+  for (int i = 0; i < 16 * 16 * 4; i++) {
+    (*ptr)[3 * i + 0] = static_cast<uint8_t>((p[i] >>  8) & 0xff);
+    (*ptr)[3 * i + 1] = static_cast<uint8_t>((p[i] >> 16) & 0xff);
+    (*ptr)[3 * i + 2] = static_cast<uint8_t>((p[i] >> 24) & 0xff);
+  }
+
+  (*ptr) += 16 * 16 * 4 * 3;
+}
+
+// ============================================================================
 void _encodeNoExtendedBlocks(uint8_t** ptr)
 {
   (*ptr)[0] = 0;
@@ -720,6 +536,28 @@ void _encodeRLESectionFill(uint8_t** ptr, uint8_t x)
   (*ptr)[0] = 1;
   (*ptr)[1] = x;
   (*ptr) += 2;
+}
+
+// ============================================================================
+void _encodeRLESectionFill16(uint8_t** ptr, uint16_t x)
+{
+  (*ptr)[0] = 1;
+  (*ptr)[1] = static_cast<uint8_t>((x     ) & 0xff);
+  (*ptr)[2] = static_cast<uint8_t>((x >> 8) & 0xff);
+  (*ptr) += 3;
+}
+
+// ============================================================================
+void _encodeRLESectionFill48(uint8_t** ptr, uint32_t x)
+{
+  (*ptr)[0] = 1;
+  (*ptr)[1] = static_cast<uint8_t>((x      ) & 0xff);
+  (*ptr)[2] = static_cast<uint8_t>((x >>  8) & 0xff);
+  (*ptr)[3] = static_cast<uint8_t>((x >> 16) & 0xff);
+  (*ptr)[4] = static_cast<uint8_t>((x >> 24) & 0xff);
+  (*ptr)[5] = 0;
+  (*ptr)[6] = 0;
+  (*ptr) += 7;
 }
 
 // ============================================================================
@@ -860,7 +698,7 @@ void file::encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz)
   // const unsigned char* p2 = p0 + outsize;
   // p1 .. p2: 01 00 00 00 00 00 00 00 00 00 00 01 00
   const uint8_t Footer[] = {
-    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0
   };
 
   memcpy(ptr, Footer, sizeof(Footer));
@@ -905,7 +743,9 @@ static void createChunkAirFromBlocks(uint8_t** ppAir, const uint32_t* pBlocks)
   for (int z = 0; z < 16; ++z) {
     for (int x = 0; x < 16; ++x) {
       for (int y = 0; y < 256; ++y) {
-        uint8_t airId = (pBlocks[x + 16 * z + 16 * 16 * y] == idAir) ? 0 : 0x0f;
+        uint32_t blockId = pBlocks[x + 16 * z + 16 * 16 * y];
+        uint8_t airId = 0x0f;
+        if (blockId == idAir) airId = 0x00;
         pAir[x + 16 * z + 16 * 16 * y] = airId;
       }
     }
@@ -913,7 +753,7 @@ static void createChunkAirFromBlocks(uint8_t** ppAir, const uint32_t* pBlocks)
 }
 
 // ============================================================================
-static void createChunkNonAirFromBlocks(uint8_t** ppAir, const uint32_t* pBlocks)
+static void createChunkNonAirFromBlocks(uint8_t** ppAir, const uint32_t* pBlocks, const uint8_t* pLevel)
 {
   uint8_t* pAir = new uint8_t[16 * 16 * 256];
   *ppAir = pAir;
@@ -921,7 +761,10 @@ static void createChunkNonAirFromBlocks(uint8_t** ppAir, const uint32_t* pBlocks
   for (int z = 0; z < 16; ++z) {
     for (int x = 0; x < 16; ++x) {
       for (int y = 0; y < 256; ++y) {
-        uint8_t airId = (pBlocks[x + 16 * z + 16 * 16 * y] == idAir) ? 0x0f : 0;
+        uint32_t blockId = pBlocks[x + 16 * z + 16 * 16 * y];
+        uint8_t level = pLevel[x + 16 * z + 16 * 16 * y];
+        uint8_t airId = (blockId == idAir) ? 0x0f : 0;
+        if (level != 0x80) airId = 0x0f;
         pAir[x + 16 * z + 16 * 16 * y] = airId;
       }
     }
@@ -1019,6 +862,23 @@ static bool allBlocksEqual(const T* pBlocks, int section, T* pBlockId)
   return true;
 }
 
+// ============================================================================
+template <typename T>
+static bool allBlocksStandard(const T* pBlocks, int section)
+{
+  pBlocks += section * 4 * 16 * 16;
+  for (int z = 0; z < 16; ++z) {
+    for (int x = 0; x < 16; ++x) {
+      for (int y = 0; y < 4; ++y) {
+        if (pBlocks[x + 16 * z + 16 * 16 * y] >= 0x100) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
 // ============================================================================
 void file::encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz, const world::world_t* pWorld)
 {
@@ -1226,6 +1086,8 @@ void file::encodeChunk(chunk_t* pChunk, int rx, int rz)
   uint8_t* p0 = pZipped;
   uint8_t* ptr = pZipped;
 
+  bool extended = false;
+
   // xx xx xx xx yy yy yy yy zz zz zz zz 18 ab 01 00 00 00 00 00
   int* pCoords = reinterpret_cast<int*>(ptr);
   int x = pChunk->x;
@@ -1260,7 +1122,13 @@ void file::encodeChunk(chunk_t* pChunk, int rx, int rz)
     }
     else {
       _encodeBlockSection(&ptr, pBlocks, i);
-      _encodeNoExtendedBlocks(&ptr);
+      if (allBlocksStandard(pBlocks, i)) {
+        _encodeNoExtendedBlocks(&ptr);
+      }
+      else {
+        _encodeExtendedBlocks(&ptr, pBlocks, i);
+        extended = true;
+      }
     }
   }
 
@@ -1294,24 +1162,29 @@ void file::encodeChunk(chunk_t* pChunk, int rx, int rz)
   memcpy(ptr, pChunk->pBiomesMap, 16 * 16);
   ptr += 16 * 16;
 
-  // 03 00 00 00 0F 00 Map
-  // 00 00 00 00 0F 00 Map
-  for (int i = 0; i < 16 * 16 * 6; i += 6) {
-    ptr[i] = 0x03;
-    ptr[i + 1] = 0x00;
-    ptr[i + 2] = 0x00;
-    ptr[i + 3] = 0x00;
-    ptr[i + 4] = 0xff;
-    ptr[i + 5] = 0x00;
+  // bb 00 00 00 0F 00 Map, bb = biome
+  for (int i = 0; i < 16 * 16; i++) {
+    ptr[6 * i]     = pChunk->pBiomesMap[i];
+    ptr[6 * i + 1] = 0x00;
+    ptr[6 * i + 2] = 0x00;
+    ptr[6 * i + 3] = 0x00;
+    ptr[6 * i + 4] = 0x0f;
+    ptr[6 * i + 5] = 0x00;
   }
   ptr += 16 * 16 * 6;
 
-  // ??
-  ptr[0] = 0x00;
-  ptr[1] = 0xff;
-  ptr[2] = 0x00;
-  ptr[3] = 0x00;
-  ptr += 4;
+  if (pChunk->pVars != nullptr) {
+    memcpy(ptr, pChunk->pVars, pChunk->cVars);
+    ptr += pChunk->cVars;
+  }
+  else {
+    // ??
+    ptr[0] = 0x00;
+    ptr[1] = 0xff;
+    ptr[2] = 0x00;
+    ptr[3] = 0x00;
+    ptr += 4;
+  }
 
   // +/- something Map
   memset(ptr, 0, 16 * 16);
@@ -1340,7 +1213,7 @@ void file::encodeChunk(chunk_t* pChunk, int rx, int rz)
 
   // 00: solid, 0f: air, 0a: ??
   uint8_t* pNonAir = nullptr;
-  createChunkNonAirFromBlocks(&pNonAir, pBlocks);
+  createChunkNonAirFromBlocks(&pNonAir, pBlocks, pLevel);
 
   for (int i = 0; i < sections; i++)
   {
@@ -1357,13 +1230,20 @@ void file::encodeChunk(chunk_t* pChunk, int rx, int rz)
   pNonAir = nullptr;
 
   // all 0
-  for (int i = 0; i < sections; i++) {
-    _encodeRLESectionFill(&ptr, 0x00);
+  if (extended) {
+    for (int i = 0; i < sections; i++) {
+      _encodeRLESectionFill16(&ptr, 0x00);
+    }
+  }
+  else {
+    for (int i = 0; i < sections; i++) {
+      _encodeRLESectionFill(&ptr, 0x00);
+    }
   }
 
   // block damage
   for (int i = 0; i < sections; i++) {
-    _encodeRLESectionFill(&ptr, 0x00);
+    _encodeRLESectionFill48(&ptr, 0x00);
   }
 
   // const unsigned char* p1 = out;

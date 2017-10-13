@@ -84,7 +84,6 @@ void analyzeRegionChunk(int rx, int rz, int cx, int cz, const world::world_t* pW
   chunk_t* pChunk1 = nullptr;
   file::encodeChunk(&pChunk1, cx, cz, rx, rz, pWorld);
 
-  file::compareChunks(pChunk0, pChunk1);
   file::decodeChunk(pChunk0);
   file::decodeChunk(pChunk1);
 

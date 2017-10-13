@@ -35,6 +35,9 @@ struct chunk_t
   uint8_t  pFillLevel[16*16*256];
   uint8_t pHeightMap[16*16];
   uint8_t pBiomesMap[16 * 16];
+
+  size_t cVars = 0;
+  uint8_t* pVars = nullptr;
 };
 
 namespace file {
@@ -43,7 +46,6 @@ void testChunk(chunk_t* pChunk, int x, int z, int rx, int rz);
 void loadChunk(const void* p7rg, int x, int z, int rx, int rz, chunk_t** ppChunk);
 void saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_t const ** ppBuffer, uint32_t* pcBuffer);
 void decodeChunk(chunk_t* pChunk);
-void compareChunks(const chunk_t* pChunk0, const chunk_t* pChunk1);
 void encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz);
 void encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz, const world::world_t* pWorld);
 void encodeChunk(chunk_t* pChunk, int rx, int rz);
