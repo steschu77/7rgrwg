@@ -34,7 +34,6 @@ namespace file {
 
 void encodeRegion(region_t** ppRegion, int rx, int rz);
 void encodeRegion(region_t** ppRegion, int rx, int rz, const world::world_t* pWorld);
-void testRegion(const region_t* pRegion, int rx, int rz);
 void loadRegion(region_t** ppRegion, const std::string& strFolder, int rx, int rz);
 void saveRegion(const region_t* pRegion, const std::string& strFolder);
 void loadRegionChunk(chunk_t** ppChunk, const std::string& strFolder, int rx, int rz, int cx, int cz);

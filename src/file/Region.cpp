@@ -10,7 +10,7 @@ void file::encodeRegion(region_t** ppRegion, int rx, int rz)
 
   for (int z = 0; z < 32; z++) {
     for (int x = 0; x < 32; x++) {
-      file::encodeChunk(&pRegion->chunk[z][x], x, z, rx, rz);
+      file::encodeChunk(pRegion->chunk[z][x], rx, rz);
     }
   }
 
@@ -25,22 +25,11 @@ void file::encodeRegion(region_t** ppRegion, int rx, int rz, const world::world_
   for (int z = 0; z < 32; z++) {
     for (int x = 0; x < 32; x++) {
       file::encodeChunk(&pRegion->chunk[z][x], x, z, rx, rz, pWorld);
+      file::encodeChunk(pRegion->chunk[z][x], rx, rz);
     }
   }
 
   *ppRegion = pRegion;
-}
-
-// ============================================================================
-void file::testRegion(const region_t* pRegion, int rx, int rz)
-{
-  for (int z = 0; z < 32; z++) {
-    for (int x = 0; x < 32; x++) {
-      if (pRegion->chunk[z][x] != nullptr) {
-        file::testChunk(pRegion->chunk[z][x], x, z, rx, rz);
-      }
-    }
-  }
 }
 
 // ============================================================================
@@ -106,8 +95,15 @@ static uint32_t _saveChunk(const region_t* pRegion, int x, int z, FILE* f)
     cBuffer = pRegion->chunk[z][x]->cRaw4k;
   }
 
-  //file::saveChunk(pRegion->chunk[z][x], x, z, rx, rz, &pBuffer, &cBuffer);
-  file::saveChunk(pRegion->chunk[0][0], x, z, rx, rz, &pBuffer, &cBuffer);
+  chunk_t* pChunk = nullptr;
+  int height = 16 + (x + z) & 31;
+  file::encodeSimpleChunk(&pChunk, x, z, rx, rz, height);
+  file::encodeChunk(pChunk, rx, rz);
+  file::saveChunk(pChunk, &pBuffer, &cBuffer);
+
+  //file::encodeChunk(pRegion->chunk[z][x], rx, rz);
+  //file::saveChunk(pRegion->chunk[z][x], &pBuffer, &cBuffer);
+  //file::saveChunk(pRegion->chunk[0][0], x, z, rx, rz, &pBuffer, &cBuffer);
 
   if (f != nullptr) {
     fwrite(pBuffer, 1u, cBuffer, f);
@@ -134,7 +130,7 @@ void file::saveRegion(const region_t* pRegion, const std::string& strFolder)
   uint32_t index[initialOffset/4] = { 0 };
   uint32_t offset = initialOffset;
 
-  file::encodeChunk(pRegion->chunk[0][0], rx, rz);
+  //file::encodeChunk(pRegion->chunk[0][0], rx, rz);
 
   for (int z = 0; z < 32; z++) {
     for (int x = 0; x < 32; x++) {

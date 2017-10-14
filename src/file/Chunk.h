@@ -42,12 +42,14 @@ struct chunk_t
 
 namespace file {
 
-void testChunk(chunk_t* pChunk, int x, int z, int rx, int rz);
 void loadChunk(const void* p7rg, int x, int z, int rx, int rz, chunk_t** ppChunk);
-void saveChunk(const chunk_t* pChunk, int x, int z, int rx, int rz, uint8_t const ** ppBuffer, uint32_t* pcBuffer);
+void saveChunk(const chunk_t* pChunk, uint8_t const ** ppBuffer, uint32_t* pcBuffer);
 void decodeChunk(chunk_t* pChunk);
-void encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz);
-void encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz, const world::world_t* pWorld);
 void encodeChunk(chunk_t* pChunk, int rx, int rz);
+
+void encodeSimpleChunk(chunk_t** ppChunk, int x, int z, int rx, int rz, int height);
+void encodeChunk(chunk_t** pChunk, int x, int z, int rx, int rz, const world::world_t* pWorld);
+
+void moveChunk(chunk_t* pChunk, int x, int z, int rx, int rz);
 
 }
