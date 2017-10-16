@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\file\Chunk.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="src\file\Deflate.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="src\file\FileSystem.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="src\file\Region.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="src\filter\Billow.cpp">
+      <Filter>Filter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\filter\Curve.cpp">
+      <Filter>Filter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\filter\Perlin.cpp">
+      <Filter>Filter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\filter\RidgedMulti.cpp">
+      <Filter>Filter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\noise\NoiseGen.cpp">
+      <Filter>Noise</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gen\gen.cpp">
+      <Filter>Gen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gfx\BMPFile.cpp">
+      <Filter>GFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\filter\WorleyNoise.cpp">
+      <Filter>Filter</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gfx\Circle.cpp">
+      <Filter>GFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gfx\Line.cpp">
+      <Filter>GFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gfx\PolyFlat.cpp">
+      <Filter>GFX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graph\Voronoi.cpp">
+      <Filter>Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graph\ClipLine.cpp">
+      <Filter>Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graph\Spline.cpp">
+      <Filter>Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\file\DistTerrain.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\main.h" />
+    <ClInclude Include="src\file\Chunk.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="src\file\Deflate.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="src\file\FileSystem.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="src\file\Region.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="src\file\ZipFile.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Abs.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Add.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Billow.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Blend.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\CheckerBoard.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Clamp.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Const.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Curve.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Derivative.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Displace.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Exponent.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Filter.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Filters.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Invert.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Lambert.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Max.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Min.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Multiply.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Perlin.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Power.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\Quantizer.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\RidgedMulti.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\ScaleBias.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\ScalePoint.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\noise\Interpolation.h">
+      <Filter>Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="src\noise\NoiseGen.h">
+      <Filter>Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="src\noise\VectorTable.h">
+      <Filter>Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gen\gen.h">
+      <Filter>Gen</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gfx\BMPTypes.h">
+      <Filter>GFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gfx\gfx.h">
+      <Filter>GFX</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\World.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter\WorleyNoise.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graph\Graph.h">
+      <Filter>Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\BlockIds.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="src\file\DistTerrain.h">
+      <Filter>File</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="File">
+      <UniqueIdentifier>{5a9c35a7-efff-4da1-87e0-2b19ecbd3b92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Noise">
+      <UniqueIdentifier>{f849c77a-190e-4ab3-afc2-8a9ad09fcce8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Filter">
+      <UniqueIdentifier>{5edd5fe7-69e5-411b-bf5b-1d3d8635cdcf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gen">
+      <UniqueIdentifier>{01c1b896-7ed6-4846-a3ee-5250e340adce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GFX">
+      <UniqueIdentifier>{17457b1a-6e8d-4429-9a6e-973f9c85c2d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{a927fc20-9994-45a3-9a27-a8d6ef6a1d16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graph">
+      <UniqueIdentifier>{b73710d0-f636-49b9-b8ac-89220288b366}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

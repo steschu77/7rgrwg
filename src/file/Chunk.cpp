@@ -251,6 +251,56 @@ void file::encodeChunk(chunk_t** ppChunk, int x, int z, int rx, int rz, const wo
 {
   chunk_t* pChunk = new chunk_t(x, z);
   *ppChunk = pChunk;
+
+  pChunk->c7rg = 16 * 16 * 256 * 8;
+  pChunk->p7rg = new uint8_t[pChunk->c7rg];
+  memset(pChunk->p7rg, 0, pChunk->c7rg);
+
+  uint32_t* pBlocks = new uint32_t[16 * 16 * 256];
+  pChunk->pBlocks = pBlocks;
+
+  uint8_t* pFillLevel = pChunk->pFillLevel;
+
+  int tx = (rx < 0) ? ((x + 1) & 31) : (x);
+  int tz = (rz < 0) ? ((z + 1) & 31) : (z);
+
+  int cx = 32 * rx + tx;
+  int cz = 32 * rz + tz;
+
+  for (int z = 0; z < 16; ++z) {
+    for (int x = 0; x < 16; ++x)
+    {
+      int wx = 16 * cx + x;
+      int wy = 16 * cz + z;
+
+      float height = pWorld->height[wy][wx];
+      int iHeight = static_cast<int>(height);
+
+      for (int y = 0; y < 256; ++y) {
+        uint32_t blockId = 0;
+        if (y <= iHeight) { blockId = pWorld->block[wy][wx]; }
+        if (y + 1 < iHeight) { blockId = idSandStone; }
+        if (y - 1 == iHeight) { blockId = pWorld->item[wy][wx]; }
+        pBlocks[x + 16 * z + 16 * 16 * y] = blockId;
+      }
+
+      for (int y = 0; y < 256; ++y) {
+        float d = std::min(std::max((y - height)*128.0f, -128.0f), 127.0f);
+        uint8_t level = static_cast<uint8_t>(d);
+        pFillLevel[x + 16 * z + 16 * 16 * y] = level;
+      }
+    }
+  }
+
+  for (int z = 0; z < 16; ++z) {
+    for (int x = 0; x < 16; ++x) {
+      float height = pWorld->height[16 * cz + z][16 * cx + x];
+      int iHeight = static_cast<int>(height);
+      pChunk->pHeightMap[x + 16 * z] = std::min(std::max(iHeight, 4), 255) - 1;
+    }
+  }
+
+  memset(pChunk->pBiomesMap, 3, 16 * 16);
 }
 
 // ============================================================================

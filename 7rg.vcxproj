@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -13,12 +13,12 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{415C9FC3-0ABE-4132-B635-5351E47C1147}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup>
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
@@ -55,9 +55,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\7dtd\BlockIds.h" />
     <ClInclude Include="src\file\Chunk.h" />
     <ClInclude Include="src\file\Deflate.h" />
+    <ClInclude Include="src\file\DistTerrain.h" />
     <ClInclude Include="src\file\FileSystem.h" />
     <ClInclude Include="src\file\Region.h" />
     <ClInclude Include="src\file\ZipFile.h" />
@@ -94,11 +94,13 @@
     <ClInclude Include="src\noise\Interpolation.h" />
     <ClInclude Include="src\noise\NoiseGen.h" />
     <ClInclude Include="src\noise\VectorTable.h" />
+    <ClInclude Include="src\world\BlockIds.h" />
     <ClInclude Include="src\world\World.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\file\Chunk.cpp" />
     <ClCompile Include="src\file\Deflate.cpp" />
+    <ClCompile Include="src\file\DistTerrain.cpp" />
     <ClCompile Include="src\file\FileSystem.cpp" />
     <ClCompile Include="src\file\Region.cpp" />
     <ClCompile Include="src\filter\Billow.cpp" />
@@ -112,6 +114,7 @@
     <ClCompile Include="src\gfx\Line.cpp" />
     <ClCompile Include="src\gfx\PolyFlat.cpp" />
     <ClCompile Include="src\graph\ClipLine.cpp" />
+    <ClCompile Include="src\graph\Spline.cpp" />
     <ClCompile Include="src\graph\Voronoi.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\noise\NoiseGen.cpp" />

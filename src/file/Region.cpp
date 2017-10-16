@@ -95,14 +95,14 @@ static uint32_t _saveChunk(const region_t* pRegion, int x, int z, FILE* f)
     cBuffer = pRegion->chunk[z][x]->cRaw4k;
   }
 
-  chunk_t* pChunk = nullptr;
-  int height = 16 + (x + z) & 31;
-  file::encodeSimpleChunk(&pChunk, x, z, rx, rz, height);
-  file::encodeChunk(pChunk, rx, rz);
-  file::saveChunk(pChunk, &pBuffer, &cBuffer);
+  //chunk_t* pChunk = nullptr;
+  //int height = 16 + (x + z) & 31;
+  //file::encodeSimpleChunk(&pChunk, x, z, rx, rz, height);
+  //file::encodeChunk(pChunk, rx, rz);
+  //file::saveChunk(pChunk, &pBuffer, &cBuffer);
 
   //file::encodeChunk(pRegion->chunk[z][x], rx, rz);
-  //file::saveChunk(pRegion->chunk[z][x], &pBuffer, &cBuffer);
+  file::saveChunk(pRegion->chunk[z][x], &pBuffer, &cBuffer);
   //file::saveChunk(pRegion->chunk[0][0], x, z, rx, rz, &pBuffer, &cBuffer);
 
   if (f != nullptr) {

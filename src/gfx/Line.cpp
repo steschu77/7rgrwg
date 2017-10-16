@@ -49,3 +49,11 @@ void gfx::drawLine(image_t& img, int x0, int y0, int x1, int y1, uint32_t color)
     }
   }
 }
+
+// ============================================================================
+void gfx::drawLineStrip(image_t& img, const point_t* pVerts, const uint32_t* pColor, unsigned cFaces)
+{
+  for (unsigned i = 0; i < cFaces; ++i) {
+    drawLine(img, pVerts[i].x, pVerts[i].y, pVerts[i+1].x, pVerts[i+1].y, pColor[i]);
+  }
+}

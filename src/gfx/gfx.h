@@ -19,6 +19,7 @@ struct rgba_t
 // ============================================================================
 struct point_t
 {
+  point_t();
   point_t(unsigned x, unsigned y);
 
   unsigned x, y;
@@ -97,7 +98,7 @@ template <typename T>
 void putPixel(image_t& img, unsigned x, unsigned y, T color);
 
 template <typename T>
-T getPixel(image_t& img, unsigned x, unsigned y);
+T getPixel(const image_t& img, unsigned x, unsigned y);
 
 template <typename T>
 void clear(image_t& img, const imagegeo_t& geo, T color);
@@ -105,6 +106,7 @@ void clear(image_t& img, const imagegeo_t& geo, T color);
 void drawLine(image_t& img, int x0, int y0, int x1, int y1, uint32_t color);
 void drawCircle(image_t& img, int x, int y, int r, uint32_t color);
 
+void drawLineStrip(image_t& img, const point_t* pVerts, const uint32_t* pColor, unsigned cFaces);
 void drawPolyStrip(image_t& img, canvas_t& canvas,
   const point_t* pVerts, const uint32_t* pColor, size_t cFaces);
 
@@ -116,6 +118,11 @@ void saveBMPFile(const char* FName, const imagegeo_t& geo, const image_t& img, b
 
 
 // ============================================================================
+inline gfx::point_t::point_t()
+: x(0), y(0)
+{}
+
+// ----------------------------------------------------------------------------
 inline gfx::point_t::point_t(unsigned x, unsigned y)
 : x(x), y(y)
 {}
@@ -276,7 +283,7 @@ inline void gfx::putPixel(image_t& img, unsigned x, unsigned y, T color)
 
 // ============================================================================
 template <typename T>
-inline T gfx::getPixel(image_t& img, unsigned x, unsigned y)
+inline T gfx::getPixel(const image_t& img, unsigned x, unsigned y)
 {
   size_t ofs = y * img.stride.p[0];
   return reinterpret_cast<T*>(&img.data[0][ofs])[x];

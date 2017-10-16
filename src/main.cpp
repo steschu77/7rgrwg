@@ -1,10 +1,11 @@
 #include "main.h"
 #include "file/Region.h"
+#include "file/DistTerrain.h"
 #include "gen/gen.h"
 
 // ============================================================================
-static const std::string strFolder = "g:\\Temp\\test08\\Region\\";
-static const std::string strFolder2 = "g:\\Temp\\test08\\Region2\\";
+static const std::string strFolder = "g:\\Temp\\test10\\Navezgane\\Region\\";
+static const std::string strFolder2 = "g:\\Temp\\test10\\Navezgane2\\Region\\";
 
 // ============================================================================
 void testChunkEncoding(const world::world_t* pWorld)
@@ -15,6 +16,7 @@ void testChunkEncoding(const world::world_t* pWorld)
   const int z = 0;
 
   chunk_t* pChunk = nullptr;
+
   file::encodeChunk(&pChunk, x, z, rx, rz, pWorld);
   file::decodeChunk(pChunk);
 
@@ -56,10 +58,10 @@ void testRegionEncoding()
 // ============================================================================
 void testRegionParsing()
 {
-  const int rxStart = -3;
-  const int rzStart =  1;
-  const int rxEnd = -2;
-  const int rzEnd =  2;
+  const int rxStart = 1;
+  const int rzStart = 1;
+  const int rxEnd = 1;
+  const int rzEnd = 1;
 
   for (int rz = rzStart; rz <= rzEnd; rz++)
   {
@@ -75,33 +77,31 @@ void testRegionParsing()
 }
 
 // ============================================================================
-void analyzeRegionChunk(int rx, int rz, int cx, int cz, const world::world_t* pWorld)
-{
-  chunk_t* pChunk0 = nullptr;
-  //file::loadRegionChunk(&pChunk0, strFolder, rx, rz, cx, cz);
-  file::encodeChunk(&pChunk0, cx, cz, rx, rz);
-
-  chunk_t* pChunk1 = nullptr;
-  file::encodeChunk(&pChunk1, cx, cz, rx, rz, pWorld);
-
-  file::decodeChunk(pChunk0);
-  file::decodeChunk(pChunk1);
-
-  delete pChunk0;
-  delete pChunk1;
-}
-
-// ============================================================================
 int main()
 {
+  //testRegionParsing();
+  //return 0;
+
   world::world_t* pWorld = new world::world_t(1, 1);
-  //gen::generateHeightMap(pWorld);
+  gen::generateHeightMap(pWorld);
   gen::generateSections(pWorld);
 
-  //analyzeRegionChunk(0, 0, 0, 0, pWorld);
-
   //testChunkEncoding(pWorld);
-  testRegionEncoding(pWorld);
   //testRegionEncoding();
+
+  testRegionEncoding(pWorld);
+
+  /*
+  const std::string strDistTerrainFile("G:\\Temp\\test08\\heightinfo.dtm");
+  terrain_t* pTerrain = nullptr;
+  file::loadTerrain(&pTerrain, strDistTerrainFile);
+
+  const std::string strTerrainFile("G:\\Temp\\heightinfo.bmp");
+  file::exportTerrain(pTerrain, strTerrainFile);
+
+  const std::string strTerrainBlockFile("G:\\Temp\\heightinfo_block.bmp");
+  file::exportTerrainBlocks(pTerrain, strTerrainBlockFile);
+
+  delete pTerrain;*/
   return 0;
 }

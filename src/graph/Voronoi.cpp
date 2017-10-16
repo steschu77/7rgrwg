@@ -17,11 +17,11 @@ protected:
   // ==========================================================================
   struct event_t
   {
-    event_t(double xx, graph::point_t pp, arc_t *aa, const graph::center_t& c0, const graph::center_t& c1)
+    event_t(double xx, const graph::corner_t& pp, arc_t *aa, const graph::center_t& c0, const graph::center_t& c1)
       : x(xx), p(pp), a(aa), valid(true), c0(c0), c1(c1) {}
 
     double x;
-    graph::point_t p;
+    graph::corner_t p;
     arc_t *a;
     graph::center_t c0;
     graph::center_t c1;
@@ -45,20 +45,22 @@ protected:
   // ==========================================================================
   struct seg_t
   {
-    graph::point_t start, end;
+    graph::corner_t start, end;
     graph::center_t c0, c1;
 
     bool done;
 
-    seg_t(const graph::point_t& p, const graph::center_t& c0, const graph::center_t& c1);
+    seg_t(const graph::corner_t& p, const graph::center_t& c0, const graph::center_t& c1);
 
     // Set the end point_t and mark as "done."
-    void finish(const graph::point_t& p) { if (done) return; end = p; done = true; }
+    void finish(const graph::corner_t& p) { if (done) return; end = p; done = true; }
   };
 
   // "Greater than" comparison, for reverse sorting in priority queue.
   struct center_gt {
-    bool operator()(const graph::center_t& a, const graph::center_t& b) {return a.x==b.x ? a.y>b.y : a.x>b.x;}
+    bool operator()(const graph::center_t& a, const graph::center_t& b) {
+      return a.pt.x == b.pt.x ? a.pt.y > b.pt.y : a.pt.x > b.pt.x;
+    }
   };
 
   struct event_gt {
@@ -90,9 +92,9 @@ protected:
   void process_event();
   void front_insert(graph::center_t p);
   void check_circle_event(arc_t *i, double x0);
-  bool circle(const graph::center_t& a, const graph::center_t& b, const graph::center_t& c, double *x, graph::point_t *o);
-  bool intersect(const graph::center_t& p, arc_t *i, graph::point_t *result);
-  graph::point_t intersection(const graph::center_t& p0, const graph::center_t& p1, double l);
+  bool circle(const graph::point_t& a, const graph::point_t& b, const graph::point_t& c, double *x, graph::point_t *o);
+  bool intersect(const graph::point_t& p, arc_t *i, graph::point_t *result);
+  graph::point_t intersection(const graph::point_t& p0, const graph::point_t& p1, double l);
   void finish_edges();
 
 private:
@@ -116,10 +118,10 @@ Voronoi::Voronoi(const graph::centers_t& pts)
     _sites.push(p);
 
     // Keep track of bounding box size.
-    if (p.x < _X0) _X0 = p.x;
-    if (p.y < _Y0) _Y0 = p.y;
-    if (p.x > _X1) _X1 = p.x;
-    if (p.y > _Y1) _Y1 = p.y;
+    if (p.pt.x < _X0) _X0 = p.pt.x;
+    if (p.pt.y < _Y0) _Y0 = p.pt.y;
+    if (p.pt.x > _X1) _X1 = p.pt.x;
+    if (p.pt.y > _Y1) _Y1 = p.pt.y;
   }
 
   // Add 20% margins to the bounding box.
@@ -137,7 +139,7 @@ int Voronoi::process(graph::segments_t& segs)
   // Process the queues; select the top element with smaller x coordinate.
   while (!_sites.empty())
   {
-    if (!_events.empty() && _events.top()->x <= _sites.top().x)
+    if (!_events.empty() && _events.top()->x <= _sites.top().pt.x)
       process_event();
     else
       process_site();
@@ -216,11 +218,11 @@ void Voronoi::front_insert(graph::center_t p)
   // Find the current arc_t(s) at height p.y (if there are any).
   for (arc_t *i = _root; i; i = i->next)
   {
-    graph::point_t z, zz;
-    if (intersect(p,i,&z))
+    graph::corner_t z, zz;
+    if (intersect(p.pt, i, &z.pt))
     {
       // New parabola intersects arc_t i.  If necessary, duplicate i.
-      if (i->next && !intersect(p,i->next, &zz)) {
+      if (i->next && !intersect(p.pt, i->next, &zz.pt)) {
         i->next->prev = new arc_t(i->p, i, i->next);
         i->next = i->next->prev;
       }
@@ -243,9 +245,9 @@ void Voronoi::front_insert(graph::center_t p)
       _output.push_back(s1);
 
       // Check for new circle _events around the new arc_t:
-      check_circle_event(i, p.x);
-      check_circle_event(i->prev, p.x);
-      check_circle_event(i->next, p.x);
+      check_circle_event(i, p.pt.x);
+      check_circle_event(i->prev, p.pt.x);
+      check_circle_event(i->next, p.pt.x);
       return;
     }
   }
@@ -257,9 +259,9 @@ void Voronoi::front_insert(graph::center_t p)
   i->next = new arc_t(p, i);
 
   // Insert segment between p and i
-  graph::point_t start;
-  start.x = _X0;
-  start.y = (i->next->p.y + i->p.y) / 2;
+  graph::corner_t start;
+  start.pt.x = _X0;
+  start.pt.y = (i->next->p.pt.y + i->p.pt.y) / 2;
   start.id = _idx_point++;
 
   seg_t* s = new seg_t(start, p, i->p);
@@ -280,18 +282,17 @@ void Voronoi::check_circle_event(arc_t *i, double x0)
     return;
 
   double x;
-  graph::point_t o;
+  graph::corner_t o;
 
-  if (circle(i->prev->p, i->p, i->next->p, &x, &o) && x > x0) {
-    // Create new event.
+  if (circle(i->prev->p.pt, i->p.pt, i->next->p.pt, &x, &o.pt) && x > x0) {
     i->e = new event_t(x, o, i, i->prev->p, i->next->p);
     _events.push(i->e);
   }
 }
 
 // ----------------------------------------------------------------------------
-// Find the rightmost point_t on the circle through a,b,c.
-bool Voronoi::circle(const graph::center_t& a, const graph::center_t& b, const graph::center_t& c, double *x, graph::point_t *o)
+// Find the rightmost point on the circle through a,b,c.
+bool Voronoi::circle(const graph::point_t& a, const graph::point_t& b, const graph::point_t& c, double *x, graph::point_t* o)
 {
   // Check that bc is a "right turn" from ab.
   if ((b.x-a.x)*(c.y-a.y) - (c.x-a.x)*(b.y-a.y) > 0) {
@@ -321,35 +322,32 @@ bool Voronoi::circle(const graph::center_t& a, const graph::center_t& b, const g
 }
 
 // ----------------------------------------------------------------------------
-// Will a new parabola at point_t p intersect with arc_t i?
-bool Voronoi::intersect(const graph::center_t& p, arc_t *i, graph::point_t *result)
+// Will a new parabola at point p intersect with arc_t i?
+bool Voronoi::intersect(const graph::point_t& p, arc_t *i, graph::point_t* result)
 {
-  if (i->p.x == p.x) {
+  if (i->p.pt.x == p.x) {
     return false;
   }
 
-  double a = 0, b = 0;
-  if (i->prev) // Get the intersection of i->prev, i.
-    a = intersection(i->prev->p, i->p, p.x).y;
-  if (i->next) // Get the intersection of i->next, i.
-    b = intersection(i->p, i->next->p, p.x).y;
+  double a = i->prev ? intersection(i->prev->p.pt, i->p.pt, p.x).y : 0.0;
+  double b = i->next ? intersection(i->p.pt, i->next->p.pt, p.x).y : 0.0;
 
-  if ((!i->prev || a <= p.y) && (!i->next || p.y <= b))
-  {
-    result->y = p.y;
-    result->x = (i->p.x*i->p.x + (i->p.y-result->y)*(i->p.y-result->y) - p.x*p.x)
-      / (2*i->p.x - 2*p.x);
-    return true;
+  if (!((!i->prev || a <= p.y) && (!i->next || p.y <= b))) {
+    return false;
   }
-  return false;
+
+  result->y = p.y;
+  result->x = (i->p.pt.x*i->p.pt.x + (i->p.pt.y-result->y)*(i->p.pt.y-result->y) - p.x*p.x)
+    / (2*i->p.pt.x - 2*p.x);
+  return true;
 }
 
 // ----------------------------------------------------------------------------
 // Where do two parabolas intersect?
-graph::point_t Voronoi::intersection(const graph::center_t& p0, const graph::center_t& p1, double l)
+graph::point_t Voronoi::intersection(const graph::point_t& p0, const graph::point_t& p1, double l)
 {
   graph::point_t res;
-  graph::center_t p = p0;
+  graph::point_t p = p0;
 
   double z0 = 2*(p0.x - l);
   double z1 = 2*(p1.x - l);
@@ -384,7 +382,8 @@ void Voronoi::finish_edges()
   // Extend each remaining segment to the new parabola intersections.
   for (arc_t *i = _root; i->next; i = i->next) {
     if (i->s1) {
-      graph::point_t p = intersection(i->p, i->next->p, l*2);
+      graph::corner_t p;
+      p.pt = intersection(i->p.pt, i->next->p.pt, l*2);
       p.id = _idx_point++;
       i->s1->finish(p);
     }
@@ -392,7 +391,7 @@ void Voronoi::finish_edges()
 }
 
 // ----------------------------------------------------------------------------
-Voronoi::seg_t::seg_t(const graph::point_t& p, const graph::center_t& c0, const graph::center_t& c1)
+Voronoi::seg_t::seg_t(const graph::corner_t& p, const graph::center_t& c0, const graph::center_t& c1)
 : start(p), end(), c0(c0), c1(c1), done(false)
 {
 }
@@ -405,33 +404,28 @@ void graph::voronoi(const graph::centers_t& pts, graph::segments_t& segs)
 }
 
 // -----------------------------------------------------------------------------
-graph::center_t::center_t()
+graph::unique_point_t::unique_point_t()
 : id(0)
-, x(0)
-, y(0)
 {
 }
 
 // -----------------------------------------------------------------------------
-graph::center_t::center_t(int id, double x, double y)
+graph::unique_point_t::unique_point_t(int id, double x, double y)
 : id(id)
-, x(x)
-, y(y)
+, pt(x, y)
 {
 }
 
 // -----------------------------------------------------------------------------
 graph::point_t::point_t()
-: id(0)
-, x(0)
+: x(0)
 , y(0)
 {
 }
 
 // -----------------------------------------------------------------------------
-graph::point_t::point_t(int id, double x, double y)
-: id(id)
-, x(x)
+graph::point_t::point_t(double x, double y)
+: x(x)
 , y(y)
 {
 }
@@ -443,7 +437,7 @@ graph::segment_t::segment_t()
 }
 
 // -----------------------------------------------------------------------------
-graph::segment_t::segment_t(int id, const point_t& p0, const point_t& p1, const center_t& c0, const center_t& c1)
+graph::segment_t::segment_t(int id, const corner_t& p0, const corner_t& p1, const center_t& c0, const center_t& c1)
 : id(id)
 , p0(p0)
 , p1(p1)
