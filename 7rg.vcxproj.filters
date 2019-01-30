@@ -59,6 +59,12 @@
     <ClCompile Include="src\file\DistTerrain.cpp">
       <Filter>File</Filter>
     </ClCompile>
+    <ClCompile Include="src\gen\RoadGen.cpp">
+      <Filter>Gen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graph\EasePoints.cpp">
+      <Filter>Graph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\main.h" />
@@ -181,6 +187,9 @@
     </ClInclude>
     <ClInclude Include="src\file\DistTerrain.h">
       <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gen\RoadGen.h">
+      <Filter>Gen</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

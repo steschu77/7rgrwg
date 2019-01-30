@@ -7,6 +7,10 @@
 #include "filter/Filters.h"
 #include "world/BlockIds.h"
 
+namespace noise {
+  extern double gRandomVectors[256 * 4];
+}
+
 // ============================================================================
 template <typename T>
 T randn(const T& n)
@@ -153,48 +157,6 @@ static double genNoise()
   return (double)rand() / 32767.0;
 }
 
-// ============================================================================
-static void easePoints(const graph::segments_t& segs, graph::centers_t& pts, double cx, double cy)
-{
-  int sgs = 0;
-
-  std::vector<edge_t> edges(segs.size());
-  std::vector<poly_t> polys(2500);
-  for (graph::segments_t::const_iterator i = segs.begin(); i != segs.end(); i++)
-  {
-    edge_t sg;
-    sg.p0 = i->p0;
-    sg.p1 = i->p1;
-
-    if (graph::clipLine(sg.p0.pt, sg.p1.pt, cx, cy))
-    {
-      edges[sgs] = sg;
-      polys[i->c0.id].edges.push_back(sgs);
-      polys[i->c1.id].edges.push_back(sgs);
-      sgs++;
-    }
-  }
-
-  int k = 0;
-  for (std::vector<poly_t>::iterator i = polys.begin(); i != polys.end(); i++, k++)
-  {
-    graph::center_t sum(k, 0, 0);
-    double count = 0;
-    for (std::list<int>::iterator j = i->edges.begin(); j != i->edges.end(); j++)
-    {
-      edge_t s = edges[*j];
-      sum.pt.x += s.p0.pt.x;
-      sum.pt.y += s.p0.pt.y;
-      sum.pt.x += s.p1.pt.x;
-      sum.pt.y += s.p1.pt.y;
-      count += 2;
-    }
-
-    sum.pt.x /= count;
-    sum.pt.y /= count;
-    pts.push_back(sum);
-  }
-}
 
 // ============================================================================
 void createMap(const graph::segments_t& segs, const graph::centers_t& pts, map_t& m, const world::world_t& world)
@@ -215,7 +177,7 @@ void createMap(const graph::segments_t& segs, const graph::centers_t& pts, map_t
 
   m.polys.resize(pts.size());
   m.edges.resize(segs.size());
-  m.verts.resize(maxid);
+  m.verts.resize(maxid + 1);
 
   for (int i = 0; i < cPolys; i++) {
     m.polys[i].pt = pts[i];
@@ -284,14 +246,43 @@ gfx::point_t cvt2point(const graph::center_t& ct) {
 }
 
 // ============================================================================
+struct Blend2 : public filter::Filter
+{
+  Blend2(filter::Filter* pf0, filter::Filter* pf1) : filter::Filter(pf0, pf1) {}
+
+  double GetValue(double x, double y, double z) const
+  {
+    double v0 = _pSource[0]->GetValue(x, y, z);
+    double v1 = _pSource[1]->GetValue(x, y, z);
+  
+    double a = (v1 - (112.0f/96.0f-1.0f));
+
+    if (a > 0) {
+      a = pow(a, .7) * 0.5 + 0.5;
+    }
+    else {
+      a = -pow(-a, .7) * 0.5 + 0.5;
+    }
+
+    v0 = (v0 * .2f + (128.0f / 96.0f - 1.0f));
+
+    return noise::LinearInterp(v1, v0, a);
+  }
+};
+
+// ============================================================================
 struct noise_map_t
 {
-  noise_map_t() : r(1.0, 2.0, 3, 0), s(32.0, 2.1, 0.6, 4, 0) {}
+  noise_map_t()
+    : r(1.0, 2.0, 3, 0)
+    , p(2.0, 2.1, 0.6, 2, 0)
+    , b(&p, &r)
+    , s(32.0, 2.1, 0.6, 4, 0) {}
 
   float height(int ix, int iy) const {
     double x = ix / 512.0;
     double y = iy / 512.0;
-    return (r.GetValue(x, y, 0) + 1.0) * 96.0f;
+    return (b.GetValue(x, y, 0) + 1.0) * 96.0f;
   }
 
   float scatter(int ix, int iy) const {
@@ -300,7 +291,15 @@ struct noise_map_t
     return s.GetValue(x, y, 0) * 8.0f;
   }
 
+  float base(int ix, int iy) const {
+    double x = ix / 512.0;
+    double y = iy / 512.0;
+    return p.GetValue(x, y, 0) * 4.0f;
+  }
+
   filter::RidgedMulti r;
+  filter::Perlin p;
+  Blend2 b;
   filter::Perlin s;
 };
 
@@ -330,7 +329,7 @@ void drawPolys(const noise_map_t& map, const map_t& m, gfx::image_t& img, const 
     int y = i->pt.pt.y;
 
     float s = map.height(x, y) + map.scatter(x, y);
-    if (s < 96) {
+    if (s < 96 || s > 128) {
       continue;
     }
 
@@ -386,9 +385,9 @@ void drawRivers(const noise_map_t& map, const map_t& m, gfx::image_t& deco, cons
   {
     int idx = randn(m.verts.size());
 
-    const vert_t& v = m.verts[idx];
+    const vert_t& vStart = m.verts[idx];
 
-    const graph::point_t& pt = v.pt;
+    const graph::point_t& pt = vStart.pt;
     float h = map.height(pt.x, pt.y);
 
     if (h < 80) {
@@ -396,31 +395,30 @@ void drawRivers(const noise_map_t& map, const map_t& m, gfx::image_t& deco, cons
     }
 
     std::vector<int> idcs;
-    int minidx = idx;
+    idcs.push_back(idx);
+
     bool minimize = true;
 
     while (minimize)
     {
       minimize = false;
-      const vert_t& v = m.verts[minidx];
+      const vert_t& v = m.verts[idcs.back()];
 
       for (int j : v.protrudes)
       {
+        auto check = [&map, &h, &idcs, &m](int i) {
+          const vert_t& v = m.verts[i];
+          float hv = map.height(v.pt.x, v.pt.y);
+          if (hv < h) {
+            h = hv;
+            idcs.push_back(i);
+            return true;
+          }
+          return false;
+        };
+
         const edge_t& edge = m.edges[j];
-        const vert_t& v0 = m.verts[edge.v0];
-        const vert_t& v1 = m.verts[edge.v1];
-        float h0 = map.height(v0.pt.x, v0.pt.y);
-        float h1 = map.height(v1.pt.x, v1.pt.y);
-        if (h0 < h) {
-          idcs.push_back(minidx);
-          minimize = true;
-          h = h0; minidx = edge.v0;
-        }
-        if (h1 < h) {
-          idcs.push_back(minidx);
-          minimize = true;
-          h = h1; minidx = edge.v1;
-        }
+        minimize = check(edge.v0) || check(edge.v1);
       }
     }
 
@@ -434,6 +432,106 @@ void drawRivers(const noise_map_t& map, const map_t& m, gfx::image_t& deco, cons
   }
 
   gfx::saveBMPFile("g:\\Temp\\test5.bmp", geo, img, true);
+}
+
+static const int X_NOISE_GEN = 1619;
+static const int Y_NOISE_GEN = 31337;
+static const int SEED_NOISE_GEN = 1013;
+static const int SHIFT_NOISE_GEN = 8;
+
+static double GradientNoise3D(double fx, double fy, int ix, int iy, int seed)
+{
+  int vectorIndex = (
+      X_NOISE_GEN    * ix
+    + Y_NOISE_GEN    * iy
+    + SEED_NOISE_GEN * seed)
+    & 0xffffffff;
+  vectorIndex ^= (vectorIndex >> SHIFT_NOISE_GEN);
+  vectorIndex &= 0xff;
+
+  double xvGradient = noise::gRandomVectors[(vectorIndex << 2)];
+  double yvGradient = noise::gRandomVectors[(vectorIndex << 2) + 1];
+
+  double xvPoint = (fx - (double)ix);
+  double yvPoint = (fy - (double)iy);
+
+  return ((xvGradient * xvPoint) + (yvGradient * yvPoint)) * 2.12;
+}
+
+static double SCurve3(double a)
+{
+  return (a * a * (3.0 - 2.0 * a));
+}
+
+static double LinearInterp(double n0, double n1, double a)
+{
+  return ((1.0 - a) * n0) + (a * n1);
+}
+
+static double GradientCoherentNoise3D(double x, double y, int seed)
+{
+  int x0 = (int)x;
+  int x1 = x0 + 1;
+  int y0 = (int)y;
+  int y1 = y0 + 1;
+
+  double xs = SCurve3(x - (double)x0);
+  double ys = SCurve3(y - (double)y0);
+
+  double n0, n1, ix0, ix1, iy0, iy1;
+  n0 = GradientNoise3D(x, y, x0, y0, seed);
+  n1 = GradientNoise3D(x, y, x1, y0, seed);
+  ix0 = LinearInterp(n0, n1, xs);
+  n0 = GradientNoise3D(x, y, x0, y1, seed);
+  n1 = GradientNoise3D(x, y, x1, y1, seed);
+  ix1 = LinearInterp(n0, n1, xs);
+  return LinearInterp(ix0, ix1, ys);
+}
+
+// ----------------------------------------------------------------------------
+double perlin(double x, double y)
+{
+  double Value = 0.0;
+  double curPersistence = 1.0;
+
+  double Signal = GradientCoherentNoise3D(x, y, 0);
+  Value = Signal * curPersistence;
+
+  return Value;
+}
+
+// ============================================================================
+void drawBaseMap(const gfx::imagegeo_t& geo)
+{
+  unsigned cx = geo.cx;
+  unsigned cy = geo.cy;
+
+  int n = 3 + randn(3);
+
+  gfx::stride_t stride(gfx::gfxStride(geo.cf, cx));
+  gfx::canvas_t canvas(cy);
+
+  gfx::image_t img(stride, gfx::gfxPlaneSize(geo.cf, stride, cy));
+  gfx::clear<uint32_t>(img, geo, 0);
+
+  auto height = [](int ix, int iy) {
+    double x = ix / 512.0;
+    double y = iy / 512.0;
+    return (perlin(x, y) + 1.5);
+  };
+
+  for (unsigned iy = 0; iy < cy; ++iy) {
+    for (unsigned ix = 0; ix < cx; ++ix)
+    {
+      float s = height(ix, iy);
+      float c = std::min(255.0f, std::max(0.0f, s * 96.0f));
+      uint32_t color = static_cast<uint32_t>(c) + 0xff000000;
+
+      gfx::putPixel(img, ix, iy, color);
+    }
+  }
+
+  gfx::saveBMPFile("g:\\Temp\\test6.bmp", geo, img, true);
 }
 
 // ============================================================================
@@ -581,8 +679,15 @@ void gen::generateSections(world::world_t* pWorld)
   double cx = pWorld->cxMeters();
   double cy = pWorld->cyMeters();
 
+  gfx::ColorFormat cf = gfx::cfRGB8888;
+  gfx::imagegeo_t geo(cf, cx, cy);
+  gfx::stride_t stride(gfx::gfxStride(cf, cx));
+
+  drawBaseMap(geo);
+
+  size_t cPoints = 2500;
   graph::centers_t pts;
-  for (int i = 0; i < 2500; i++)
+  for (int i = 0; i < cPoints; i++)
   {
     double x = genNoise() * cx;
     double y = genNoise() * cy;
@@ -593,13 +698,13 @@ void gen::generateSections(world::world_t* pWorld)
   voronoi(pts, segs);
 
   pts.clear();
-  easePoints(segs, pts, cx, cy);
+  graph::easePoints(segs, pts, cPoints - 1, cx, cy);
 
   segs.clear();
   voronoi(pts, segs);
 
   pts.clear();
-  easePoints(segs, pts, cx, cy);
+  graph::easePoints(segs, pts, cPoints - 1, cx, cy);
 
   segs.clear();
   voronoi(pts, segs);
@@ -608,10 +713,6 @@ void gen::generateSections(world::world_t* pWorld)
   createMap(segs, pts, map, *pWorld);
 
   noise_map_t noise;
-
-  gfx::ColorFormat cf = gfx::cfRGB8888;
-  gfx::imagegeo_t geo(cf, cx, cy);
-  gfx::stride_t stride(gfx::gfxStride(cf, cx));
 
   gfx::image_t heightMap(stride, gfx::gfxPlaneSize(cf, stride, cy));
   drawPolys(noise, map, heightMap, geo);
@@ -639,8 +740,8 @@ void gen::generateSections(world::world_t* pWorld)
       bool isRock = (id & ~0xff) == 0xfffff200;
       bool isAzalea = (id & ~0xff) == 0xfffff300;
 
-      //float e = isRoad ? b : b + s;
-      float e = b;
+      float e = isRoad ? 80 : b;
+      //float e = b;
       float d = std::min(std::max(e, 0.0f), 255.0f);
 
       pWorld->item[y][x] = idAir;

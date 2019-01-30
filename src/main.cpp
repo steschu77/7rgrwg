@@ -2,6 +2,7 @@
 #include "file/Region.h"
 #include "file/DistTerrain.h"
 #include "gen/gen.h"
+#include "gen/RoadGen.h"
 
 // ============================================================================
 static const std::string strFolder = "g:\\Temp\\test10\\Navezgane\\Region\\";
@@ -83,13 +84,14 @@ int main()
   //return 0;
 
   world::world_t* pWorld = new world::world_t(1, 1);
-  gen::generateHeightMap(pWorld);
-  gen::generateSections(pWorld);
+  gen::generateRoadMap(pWorld);
+  
+  //gen::generateHeightMap(pWorld);
+  //gen::generateSections(pWorld);
+  //testRegionEncoding(pWorld);
 
   //testChunkEncoding(pWorld);
   //testRegionEncoding();
-
-  testRegionEncoding(pWorld);
 
   /*
   const std::string strDistTerrainFile("G:\\Temp\\test08\\heightinfo.dtm");

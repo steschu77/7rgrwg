@@ -3,7 +3,8 @@
 
 // ============================================================================
 // Bresenham's Circle Algorithm
-void gfx::drawCircle(gfx::image_t& img, int x, int y, int r, uint32_t color)
+template <typename T>
+void gfx::drawCircle(gfx::image_t& img, int x, int y, int r, T color)
 {
   int dx = 0;
   int dy = r;

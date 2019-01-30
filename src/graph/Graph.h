@@ -55,6 +55,7 @@ point_t normalize(const point_t& p, double x = 1.0);
 auto clipLine(point_t& p0, point_t& p1, double cx, double cy) -> int;
 auto bezierPoint(double t, const graph::point_t* p) -> point_t;
 void voronoi(const centers_t& pts, segments_t& segs);
+void easePoints(const segments_t& segs, centers_t& pts, int maxid, double cx, double cy);
 
 }
 

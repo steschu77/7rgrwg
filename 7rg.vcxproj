@@ -87,6 +87,7 @@
     <ClInclude Include="src\filter\ScalePoint.h" />
     <ClInclude Include="src\filter\WorleyNoise.h" />
     <ClInclude Include="src\gen\gen.h" />
+    <ClInclude Include="src\gen\RoadGen.h" />
     <ClInclude Include="src\gfx\BMPTypes.h" />
     <ClInclude Include="src\gfx\gfx.h" />
     <ClInclude Include="src\graph\Graph.h" />
@@ -109,11 +110,13 @@
     <ClCompile Include="src\filter\RidgedMulti.cpp" />
     <ClCompile Include="src\filter\WorleyNoise.cpp" />
     <ClCompile Include="src\gen\gen.cpp" />
+    <ClCompile Include="src\gen\RoadGen.cpp" />
     <ClCompile Include="src\gfx\BMPFile.cpp" />
     <ClCompile Include="src\gfx\Circle.cpp" />
     <ClCompile Include="src\gfx\Line.cpp" />
     <ClCompile Include="src\gfx\PolyFlat.cpp" />
     <ClCompile Include="src\graph\ClipLine.cpp" />
+    <ClCompile Include="src\graph\EasePoints.cpp" />
     <ClCompile Include="src\graph\Spline.cpp" />
     <ClCompile Include="src\graph\Voronoi.cpp" />
     <ClCompile Include="src\main.cpp" />
