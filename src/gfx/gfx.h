@@ -103,6 +103,9 @@ T getPixel(const image_t& img, unsigned x, unsigned y);
 template <typename T>
 void clear(image_t& img, const imagegeo_t& geo, T color);
 
+template <typename Func>
+void drawLine(int x0, int y0, int x1, int y1, Func fn);
+
 template <typename T>
 void drawLine(image_t& img, int x0, int y0, int x1, int y1, T color);
 
@@ -267,7 +270,7 @@ inline gfx::stride_t gfx::gfxStride(ColorFormat cf, unsigned Pels, unsigned Alig
 }
 
 // ============================================================================
-inline gfx::plane_size_t gfx::gfxPlaneSize(ColorFormat cf, const stride_t& stride, unsigned lines)
+inline gfx::plane_size_t gfx::gfxPlaneSize(ColorFormat /*cf*/, const stride_t& stride, unsigned lines)
 {
   plane_size_t factor = plane_size_t(1, 0, 0);
 
@@ -327,8 +330,8 @@ static void drawLineLoop(int u0, int v0, int du, int dv, Func func)
 }
 
 // ============================================================================
-template <typename T>
-void gfx::drawLine(image_t& img, int x0, int y0, int x1, int y1, T color)
+template <typename Func>
+void gfx::drawLine(int x0, int y0, int x1, int y1, Func fn)
 {
   int dx = x1 - x0;
   int dy = y1 - y0;
@@ -337,26 +340,34 @@ void gfx::drawLine(image_t& img, int x0, int y0, int x1, int y1, T color)
     return;
   }
 
-  auto drawXY = [&](int x, int y) { putPixel(img, x, y, color); };
-  auto drawYX = [&](int y, int x) { putPixel(img, x, y, color); };
+  auto fnXY = [&](int x, int y) { fn(x, y); };
+  auto fnYX = [&](int x, int y) { fn(y, x); };
 
   if (abs(dx) >= abs(dy))
   {
     if (x0 < x1) {
-      drawLineLoop(x0, y0, dx, dy, drawXY);
+      drawLineLoop(x0, y0, dx, dy, fnXY);
     }
     else {
-      drawLineLoop(x1, y1, -dx, -dy, drawXY);
+      drawLineLoop(x1, y1, -dx, -dy, fnXY);
     }
   }
   else {
     if (y0 < y1) {
-      drawLineLoop(y0, x0, dy, dx, drawYX);
+      drawLineLoop(y0, x0, dy, dx, fnYX);
     }
     else {
-      drawLineLoop(y1, x1, -dy, -dx, drawYX);
+      drawLineLoop(y1, x1, -dy, -dx, fnYX);
     }
   }
+}
+
+// ============================================================================
+template <typename T>
+void gfx::drawLine(image_t& img, int x0, int y0, int x1, int y1, T color)
+{
+  auto fn = [&](int x, int y) { putPixel(img, x, y, color); };
+  return drawLine(x0, y0, x1, y1, fn);
 }
 
 // ============================================================================

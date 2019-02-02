@@ -95,6 +95,7 @@
     <ClInclude Include="src\noise\Interpolation.h" />
     <ClInclude Include="src\noise\NoiseGen.h" />
     <ClInclude Include="src\noise\VectorTable.h" />
+    <ClInclude Include="src\vector\vector2.h" />
     <ClInclude Include="src\world\BlockIds.h" />
     <ClInclude Include="src\world\World.h" />
   </ItemGroup>
@@ -121,6 +122,8 @@
     <ClCompile Include="src\graph\Voronoi.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\noise\NoiseGen.cpp" />
+    <ClCompile Include="src\vector\matrix2x2.cpp" />
+    <ClCompile Include="src\vector\vector2.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
