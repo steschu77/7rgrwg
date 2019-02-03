@@ -3,6 +3,7 @@
 #include "file/DistTerrain.h"
 #include "gen/gen.h"
 #include "gen/RoadGen.h"
+#include "gen/BroadPhase.h"
 
 // ============================================================================
 static const std::string strFolder = "g:\\Temp\\test10\\Navezgane\\Region\\";
@@ -83,8 +84,9 @@ int main()
   //testRegionParsing();
   //return 0;
 
-  world::world_t* pWorld = new world::world_t(1, 1);
-  gen::generateRoadMap(pWorld);
+  world::world_t* pWorld = new world::world_t(4, 4);
+  //gen::generateRoadMap(pWorld);
+  gen::generateBiomes(pWorld);
   
   //gen::generateHeightMap(pWorld);
   //gen::generateSections(pWorld);

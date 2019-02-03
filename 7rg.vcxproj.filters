@@ -71,6 +71,9 @@
     <ClCompile Include="src\vector\vector2.cpp">
       <Filter>Vector</Filter>
     </ClCompile>
+    <ClCompile Include="src\gen\BroadPhase.cpp">
+      <Filter>Gen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\main.h" />
@@ -199,6 +202,9 @@
     </ClInclude>
     <ClInclude Include="src\vector\vector2.h">
       <Filter>Vector</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gen\BroadPhase.h">
+      <Filter>Gen</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -86,6 +86,7 @@
     <ClInclude Include="src\filter\ScaleBias.h" />
     <ClInclude Include="src\filter\ScalePoint.h" />
     <ClInclude Include="src\filter\WorleyNoise.h" />
+    <ClInclude Include="src\gen\BroadPhase.h" />
     <ClInclude Include="src\gen\gen.h" />
     <ClInclude Include="src\gen\RoadGen.h" />
     <ClInclude Include="src\gfx\BMPTypes.h" />
@@ -110,6 +111,7 @@
     <ClCompile Include="src\filter\Perlin.cpp" />
     <ClCompile Include="src\filter\RidgedMulti.cpp" />
     <ClCompile Include="src\filter\WorleyNoise.cpp" />
+    <ClCompile Include="src\gen\BroadPhase.cpp" />
     <ClCompile Include="src\gen\gen.cpp" />
     <ClCompile Include="src\gen\RoadGen.cpp" />
     <ClCompile Include="src\gfx\BMPFile.cpp" />
