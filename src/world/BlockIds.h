@@ -130,6 +130,12 @@ enum BlockIds
   idPlantedGoldenrod1 = 762,
   idPlantedGoldenrod2 = 763,
   idPlantedGoldenrod3Harvest = 764,
+
+  idWaterMovingBucket = 823,
+  idWaterStaticBucket = 824,
+  idWaterMoving = 825,
+  idWater = 826,
+
   idPlantedAloe1 = 855,
   idPlantedAloe2 = 856,
   idSnowberry3Harvest = 857,
@@ -154,4 +160,9 @@ enum BlockIds
   idTreeForestGrassDiagonal = 842, // 00x0034a, x=0,1,2,3,4,5
 
   idTreeAzalea = 1402,
+
+  idRandomCarsHelper = 1452,
+  idCntCar03SedanDamage0 = 1453,
+  idCntCar03SedanDamage1 = 1454,
+  idCntCar03SedanDamage2 = 1455, // wreck, no color
 };
